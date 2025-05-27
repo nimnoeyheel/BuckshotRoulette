@@ -1,0 +1,57 @@
+# Standard Unreal Engine .gitignore for C++ projects
+
+# ----- Intermediate and Saved Folders -----
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# ----- Visual Studio & IDE Specific Files -----
+.vs/
+.vs/VSWorkspaceSettings.json
+.vs/sln/
+.vscode/
+.idea/
+*.VC.db
+*.opensdf
+*.opendb
+*.sdf
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+*.DotSettings.user
+
+# Additional Visual Studio files
+*.pdb
+*.idb
+*.ipch
+*.obj
+*.pch
+*.res
+*.sbr
+*.bsc
+*.map
+*.ilk
+*.exe
+*.dll
+*.lib
+*.exp
+
+# Copilot related files (specific to your previous error)
+# .vs 폴더 아래 어떤 이름의 폴더가 오든 그 안에 CopilotIndices/, ipch/, Browse.VC.db가 있다면 모두 제외
+.vs/*/CopilotIndices/
+.vs/*/ipch/
+.vs/*/Browse.VC.db
+
+# ----- Packaging and Logs -----
+Packaged/
+*.log
+CrashReportClient/
+
+# ----- Generated C++ Files (if any exist outside of Source) -----
+*/Script/
+
+# ----- Mac specific -----
+.DS_Store
