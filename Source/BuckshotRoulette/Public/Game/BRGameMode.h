@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -17,5 +17,8 @@ class BUCKSHOTROULETTE_API ABRGameMode : public AGameModeBase
 public:
 	ABRGameMode();
 
+protected:
+	virtual void PostLogin(class APlayerController* NewPlayer) override;
+	virtual void BeginPlay() override;
 
 };

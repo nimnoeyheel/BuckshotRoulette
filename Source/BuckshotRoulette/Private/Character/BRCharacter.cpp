@@ -2,6 +2,7 @@
 
 
 #include "Character/BRCharacter.h"
+#include "Player/BRPlayerState.h"
 
 // Sets default values
 ABRCharacter::ABRCharacter()
@@ -16,6 +17,11 @@ void ABRCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (ABRPlayerState* PS = GetPlayerState<ABRPlayerState>())
+	{
+		UE_LOG(LogTemp, Log, TEXT("PlayerName: %s"), *PS->GetPlayerName());
+	}
+
 }
 
 // Called every frame
