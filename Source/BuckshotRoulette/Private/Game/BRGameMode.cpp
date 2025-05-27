@@ -3,8 +3,8 @@
 
 #include "Game/BRGameMode.h"
 #include "Game/BRGameState.h"
-#include "Character/BRPlayerController.h"
-#include "Character/BRPlayerState.h"
+#include "Player/BRPlayerController.h"
+#include "Player/BRPlayerState.h"
 
 ABRGameMode::ABRGameMode()
 {
@@ -12,10 +12,6 @@ ABRGameMode::ABRGameMode()
 	if (BRPlayerRef.Class)
 	{
 		DefaultPawnClass = BRPlayerRef.Class;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("BRPlayerRef.Class is null.."));
 	}
 
 	PlayerControllerClass = ABRPlayerController::StaticClass();
