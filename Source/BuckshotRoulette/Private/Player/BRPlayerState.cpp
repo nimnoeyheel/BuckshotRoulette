@@ -3,10 +3,22 @@
 
 #include "Player/BRPlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "Game/BRGameMode.h"
 
 void ABRPlayerState::ServerRPCSetPlayerName_Implementation(const FString& NewName)
 {
 	SetPlayerName(NewName);
+	bNicknameEntered = true;
+
+	// GameMode에서 서버-클라 모두 닉네임 입력했는지 확인 요청
+	if (GetWorld())
+	{
+		ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+		if (GM)
+		{
+			GM->TryStartGameIfReady();
+		}
+	}
 }
 
 bool ABRPlayerState::ServerRPCSetPlayerName_Validate(const FString& NewName)
@@ -17,7 +29,7 @@ bool ABRPlayerState::ServerRPCSetPlayerName_Validate(const FString& NewName)
 void ABRPlayerState::OnRep_PlayerName()
 {
 	Super::OnRep_PlayerName();
-	UE_LOG(LogTemp, Log, TEXT("[CLIENT] Replicated Nickname: %s, PlayerIndex: %d"), *GetPlayerName(), PlayerIndex);
+	UE_LOG(LogTemp, Log, TEXT("[CLIENT%d] Nickname: %s"), PlayerIndex , *GetPlayerName());
 	// UI 업데이트
 }
 

@@ -53,3 +53,35 @@ void ABRGameMode::BeginPlay()
 	Super::BeginPlay();
 
 }
+
+void ABRGameMode::TryStartGameIfReady()
+{
+	int ReadyCount = 0;
+
+	// 모든 PlayerState 순회
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		UE_LOG(LogTemp, Log, TEXT("It: %s"), *It->Get()->GetName());
+
+		APlayerController* PC = It->Get();
+		ABRPlayerState* PS = PC ? Cast<ABRPlayerState>(PC->PlayerState) : nullptr;
+
+		// 플레이어 닉네임이 비어있지 않으면 카운트
+		//if (PS && !PS->GetPlayerName().IsEmpty())
+		if(PS && PS->bNicknameEntered)
+		{
+			ReadyCount++;
+		}
+	}
+
+	// 2명 모두 닉네임 입력 완료 시 게임 시작
+	if(ReadyCount == 2) StartGame();
+	
+	UE_LOG(LogTemp, Log, TEXT("ReadyCount: %d"), ReadyCount);
+}
+
+void ABRGameMode::StartGame()
+{
+	// 초기화, 턴 배정, UI 전환 등
+	UE_LOG(LogTemp, Log, TEXT("Game Start!"));
+}

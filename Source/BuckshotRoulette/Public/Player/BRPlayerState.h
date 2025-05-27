@@ -25,5 +25,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
     int32 PlayerIndex = 0;
 
+	// 닉네임을 설정했는지 여부
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	bool bNicknameEntered = false;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
