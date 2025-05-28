@@ -75,13 +75,57 @@ void ABRGameMode::TryStartGameIfReady()
 	}
 
 	// 2명 모두 닉네임 입력 완료 시 게임 시작
-	if(ReadyCount == 2) StartGame();
+	if(ReadyCount == 2) PickFirstPlayer();
 	
 	UE_LOG(LogTemp, Log, TEXT("ReadyCount: %d"), ReadyCount);
 }
 
+void ABRGameMode::PickFirstPlayer()
+{
+	// 연결된 모든 PlayerState 가져오기
+	TArray<APlayerState*> AllPlayers = GameState->PlayerArray;
+
+	int32 FirstIdx = FMath::RandRange(0, AllPlayers.Num() -1);
+
+	// 선공 플레이어 지정
+	ABRGameState* GS = Cast<ABRGameState>(GameState);
+	if (GS)
+	{
+		GS->SetTurnPlayer(AllPlayers[FirstIdx]);
+
+		UE_LOG(LogTemp, Log, TEXT("TurnPlayer: %s"), *AllPlayers[FirstIdx]->GetPlayerName());
+
+		// 턴이 정해지면 게임 시작
+		StartGame();
+	}
+}
+
 void ABRGameMode::StartGame()
 {
-	// 초기화, 턴 배정, UI 전환 등
+	// UI, 게임 보드/상태 초기화, 첫 턴 알림 등
 	UE_LOG(LogTemp, Log, TEXT("Game Start!"));
+
+	// UI 처리 - 턴 알림
+
+}
+
+void ABRGameMode::NextTurn()
+{
+	ABRGameState* GS = Cast<ABRGameState>(GameState);
+	if(!GS) return;
+
+	TArray<APlayerState*> Players = GameState->PlayerArray;
+	if (GS->TurnPlayer == Players[0])
+	{
+		GS->SetTurnPlayer(Players[1]);
+	}
+	else
+	{
+		GS->SetTurnPlayer(Players[1]);
+	}
+
+	// 3인 이상 시
+	//int CurrentIdx = GameState->PlayerArray.IndexOfByKey(GS->TurnPlayer);
+	//int NextIdx = (CurrentIdx + 1) % GameState->PlayerArray.Num();
+	//GS->SetTurnPlayer(GameState->PlayerArray[NextIdx]);
 }

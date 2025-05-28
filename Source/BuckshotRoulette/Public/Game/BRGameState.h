@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -13,5 +13,19 @@ UCLASS()
 class BUCKSHOTROULETTE_API ABRGameState : public AGameStateBase
 {
 	GENERATED_BODY()
+	
+public:
+	// 턴 플레이어
+	UPROPERTY(ReplicatedUsing=OnRep_TurnPlayer)
+	class APlayerState* TurnPlayer;
+
+	// 턴 변경시 클라에게 알림
+	UFUNCTION()
+	void OnRep_TurnPlayer();
+
+	// 현재 턴 플레이어 세팅 (서버 only)
+	void SetTurnPlayer(class APlayerState* NewTurnPlayer);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const override;
 	
 };

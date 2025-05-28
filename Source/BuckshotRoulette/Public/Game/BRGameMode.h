@@ -25,6 +25,10 @@ public:
 	// 모든 플레이어가 닉네임 입력을 완료했는지 체크하는 함수
 	void TryStartGameIfReady();
 
-protected:
+	// 턴 초기화
+	void PickFirstPlayer();
 	void StartGame();
+
+	// 턴 플레이어가 액션을 마쳤을 때 서버에서 호출
+	void NextTurn();
 };
