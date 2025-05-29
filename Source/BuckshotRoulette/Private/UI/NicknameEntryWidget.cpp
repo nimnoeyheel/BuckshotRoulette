@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "UI/NicknameEntryWidget.h"
@@ -26,12 +26,12 @@ void UNicknameEntryWidget::NativeConstruct()
 void UNicknameEntryWidget::OnNicknameTextChanged(const FText& Text)
 {
     FString Input = Text.ToString();
-    // ÀÔ·ÂµÈ ¹®ÀÚ¿­ ±æÀÌ °Ë»ç: ÃÊ°ú ½Ã Àß¶ó³»±â
+    // ì…ë ¥ëœ ë¬¸ìì—´ ê¸¸ì´ ê²€ì‚¬: ì´ˆê³¼ ì‹œ ì˜ë¼ë‚´ê¸°
     if (Input.Len() > MaxNicknameLength)
     {
         Input = Input.Left(MaxNicknameLength);
 
-        // ÅØ½ºÆ®¹Ú½º °ª °­Á¦ ¼öÁ¤
+        // í…ìŠ¤íŠ¸ë°•ìŠ¤ ê°’ ê°•ì œ ìˆ˜ì •
         EdtTxt_Nickname->SetText(FText::FromString(Input));
     }
     LastValidNickname = Input;
@@ -40,12 +40,12 @@ void UNicknameEntryWidget::OnNicknameTextChanged(const FText& Text)
 void UNicknameEntryWidget::OnEntryButtonClicked()
 {
     FString Nick = EdtTxt_Nickname ? EdtTxt_Nickname->GetText().ToString() : TEXT("");
-    // ¹®ÀÚ¿­ÀÌ ºñ¾îÀÖÀ¸¸é
+    // ë¬¸ìì—´ì´ ë¹„ì–´ìˆìœ¼ë©´
     if (Nick.IsEmpty())
     {
-        // ¿¡·¯¸Ş¼¼Áö Ç¥½Ã
+        // ì—ëŸ¬ë©”ì„¸ì§€ í‘œì‹œ
         Txt_ErrorMsg->SetVisibility(ESlateVisibility::Visible);
-        // Ä«¸Ş¶ó ¼ÎÀÌÅ· Ãß°¡ÇÏ±â
+        // ì¹´ë©”ë¼ ì…°ì´í‚¹ ì¶”ê°€í•˜ê¸°
         return;
     }
 
@@ -55,9 +55,12 @@ void UNicknameEntryWidget::OnEntryButtonClicked()
         ABRPlayerState* PS = Cast<ABRPlayerState>(PC->PlayerState);
         if (PS)
         {
-            // ¼­¹ö·Î ´Ğ³×ÀÓ Àü´Ş
+            // ì„œë²„ë¡œ ë‹‰ë„¤ì„ ì „ë‹¬
             PS->ServerRPCSetPlayerName(LastValidNickname);
-			SetVisibility(ESlateVisibility::Hidden);
+
+            // ë‹‰ë„¤ì„ ì™„ë£Œ ì•Œë¦¼
+            OnNicknameEntryComplete.Broadcast();
+            //SetVisibility(ESlateVisibility::Hidden);
         }
     }
 }

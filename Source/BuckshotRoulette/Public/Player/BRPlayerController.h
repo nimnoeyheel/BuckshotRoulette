@@ -35,5 +35,8 @@ public:
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<class UNicknameEntryWidget> NicknameEntryWidgetClass;
+	TSubclassOf<class UInGameWidget> InGameWidgetClass;
+
+	UPROPERTY()
+	class UInGameWidget* InGameUI;
 };

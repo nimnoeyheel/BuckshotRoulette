@@ -37,7 +37,6 @@ void ABRGameMode::PostLogin(APlayerController* NewPlayer)
 		{
 			// 인덱스 부여
 			PS->PlayerIndex = GetNumPlayers();
-			UE_LOG(LogTemp, Log, TEXT("PlayerIndex: %d"), PS->PlayerIndex);
 
 			// 고유 ID (스팀 연동 시 스팀ID 자동 할당)
 			FString uniqueId = PS->GetUniqueId()->ToString();
@@ -61,8 +60,6 @@ void ABRGameMode::TryStartGameIfReady()
 	// 모든 PlayerState 순회
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		UE_LOG(LogTemp, Log, TEXT("It: %s"), *It->Get()->GetName());
-
 		APlayerController* PC = It->Get();
 		ABRPlayerState* PS = PC ? Cast<ABRPlayerState>(PC->PlayerState) : nullptr;
 
@@ -74,10 +71,8 @@ void ABRGameMode::TryStartGameIfReady()
 		}
 	}
 
-	// 2명 모두 닉네임 입력 완료 시 게임 시작
+	// 2명 모두 닉네임 입력 완료 시 선공 플레이어 랜덤 결정
 	if(ReadyCount == 2) PickFirstPlayer();
-	
-	UE_LOG(LogTemp, Log, TEXT("ReadyCount: %d"), ReadyCount);
 }
 
 void ABRGameMode::PickFirstPlayer()
