@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "Types/AmmoType.h"
 #include "BRGameState.generated.h"
 
 /**
@@ -28,4 +29,10 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const override;
 	
+	// 총알 시스템
+	UPROPERTY(Replicated)
+	TArray<EAmmoType> AmmoSequence;
+
+	UPROPERTY(Replicated)
+	int32 CurrentAmmoIndex = 0;
 };

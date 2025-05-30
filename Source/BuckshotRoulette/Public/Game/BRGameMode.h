@@ -6,6 +6,30 @@
 #include "GameFramework/GameModeBase.h"
 #include "BRGameMode.generated.h"
 
+USTRUCT(BlueprintType)
+struct FRoundAmmoConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	int32 NumLive = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 NumBlank = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FMatchConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	TArray<FRoundAmmoConfig> Rounds;
+
+	UPROPERTY(EditAnywhere)
+	int32 PlayerHP; // Match별 HP 세팅용
+};
+
 /**
  * 
  */
@@ -22,6 +46,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+
+#pragma region 턴 시스템
 	// 모든 플레이어가 닉네임 입력을 완료했는지 체크하는 함수
 	void TryStartGameIfReady();
 
@@ -31,4 +57,20 @@ public:
 
 	// 턴 플레이어가 액션을 마쳤을 때 서버에서 호출
 	void NextTurn();
+
+	// 라운드 종료
+	void OnRoundEnd();
+#pragma endregion
+
+#pragma region 총알 시스템
+	// 매치-라운드 별 HP와 총알 갯수 명시
+	void InitMatchConfigs();
+
+	// 장전 시 실탄, 공탄 랜덤 장전
+	void SetupAmmoForRound(int32 MatchIdx, int32 RoundIdx);
+
+	int32 CurrentMatchIdx = 0;
+	int32 CurrentRoundIdx = 0;
+#pragma endregion
+
 };

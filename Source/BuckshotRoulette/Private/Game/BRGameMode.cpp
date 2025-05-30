@@ -5,6 +5,7 @@
 #include "Game/BRGameState.h"
 #include "Player/BRPlayerController.h"
 #include "Player/BRPlayerState.h"
+#include "Types/AmmoType.h"
 
 ABRGameMode::ABRGameMode()
 {
@@ -50,7 +51,7 @@ void ABRGameMode::PostLogin(APlayerController* NewPlayer)
 void ABRGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
+	InitMatchConfigs();
 }
 
 void ABRGameMode::TryStartGameIfReady()
@@ -100,8 +101,9 @@ void ABRGameMode::StartGame()
 	// UI, 게임 보드/상태 초기화, 첫 턴 알림 등
 	UE_LOG(LogTemp, Log, TEXT("Game Start!"));
 
-	// UI 처리 - 턴 알림
-
+	CurrentMatchIdx = 0;
+	CurrentRoundIdx = 0;
+	SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
 }
 
 void ABRGameMode::NextTurn()
@@ -123,4 +125,96 @@ void ABRGameMode::NextTurn()
 	//int CurrentIdx = GameState->PlayerArray.IndexOfByKey(GS->TurnPlayer);
 	//int NextIdx = (CurrentIdx + 1) % GameState->PlayerArray.Num();
 	//GS->SetTurnPlayer(GameState->PlayerArray[NextIdx]);
+}
+
+void ABRGameMode::OnRoundEnd()
+{
+	++CurrentRoundIdx;
+	if (AllMatches[CurrentMatchIdx].Rounds.IsValidIndex(CurrentRoundIdx))
+	{
+		SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
+		// 라운드별 초기화
+	}
+	else
+	{
+		++CurrentMatchIdx;
+		CurrentRoundIdx = 0;
+		if (AllMatches.IsValidIndex(CurrentMatchIdx))
+		{
+			SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
+			// 새 매치별 초기화
+		}
+		else
+		{
+			// 게임 전체 종료
+		}
+	}
+
+}
+
+TArray<FMatchConfig> AllMatches;
+void ABRGameMode::InitMatchConfigs()
+{
+	AllMatches.Empty();
+
+	// Match_1
+	{
+		FMatchConfig Match;
+		Match.PlayerHP = 2;
+		Match.Rounds = {
+			{ 1, 2 },	// 1라운드 : 1 Live, 2 Blank
+			{ 3, 2 },	// 2라운드 : 3 Live, 2 Blank
+			{ 3, 2 }	// 3라운드 : 2 Live, 1 Blank
+		};
+		AllMatches.Add(Match);
+	}
+
+	// Match_2
+	{
+		FMatchConfig Match;
+		Match.PlayerHP = 4;
+		Match.Rounds = {
+			{ 1, 1 },	// 1라운드 : 1 Live, 1 Blank
+			{ 2, 2 },	// 2라운드 : 2 Live, 2 Blank
+			{ 3, 3 }	// 3라운드 : 3 Live, 3 Blank
+		};
+		AllMatches.Add(Match);
+	}
+
+	// Match_3
+	{
+		FMatchConfig Match;
+		Match.PlayerHP = 6;
+		Match.Rounds = {
+			{ 1, 2 },	// 1라운드 : 1 Live, 2 Blank
+			{ 4, 4 },	// 2라운드 : 4 Live, 4 Blank
+			{ 3, 2 }	// 3라운드 : 3 Live, 2 Blank
+		};
+		AllMatches.Add(Match);
+	}
+}
+
+void ABRGameMode::SetupAmmoForRound(int32 MatchIdx, int32 RoundIdx)
+{
+	// AllMatches[MatchIdx].Rounds[RoundIdx]의 NumLive/NumBlank 값 이용
+	if (!AllMatches.IsValidIndex(MatchIdx)) return;
+	const FMatchConfig& Match = AllMatches[MatchIdx];
+	if(!Match.Rounds.IsValidIndex(RoundIdx)) return;
+	const FRoundAmmoConfig& Round = Match.Rounds[RoundIdx];
+
+	// 실탄/공탄 배열 만들기
+	TArray<EAmmoType> NewAmmo;
+	for (int i = 0; i < Round.NumLive; ++i) NewAmmo.Add(EAmmoType::Live);
+	for (int i = 0; i < Round.NumBlank; ++i) NewAmmo.Add(EAmmoType::Blank);
+
+	// 랜덤 셔플
+	for (int i = 0; i < NewAmmo.Num(); ++i)
+	{
+		int SwapIdx = FMath::RandRange(0, NewAmmo.Num()-1);
+		NewAmmo.Swap(i, SwapIdx);
+	}
+
+	ABRGameState* GS = GetGameState<ABRGameState>();
+	GS->AmmoSequence = NewAmmo;
+	GS->CurrentAmmoIndex = 0;
 }
