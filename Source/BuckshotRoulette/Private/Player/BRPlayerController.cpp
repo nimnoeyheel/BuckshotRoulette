@@ -7,6 +7,7 @@
 #include "Game/BRGameState.h"
 #include "Game/BRGameMode.h"
 #include "UI/InGameWidget.h"
+#include "GameFramework/PlayerState.h"
 
 ABRPlayerController::ABRPlayerController()
 {
@@ -27,14 +28,20 @@ void ABRPlayerController::BeginPlay()
 		FString ROLE = HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT");
 		UE_LOG(LogTemp, Log, TEXT("This is %s"), *ROLE);
 
-		if (InGameWidgetClass)
+#pragma region UI
+		// 레벨에 따라 UI 지정
+		FString CurrentLevel = GetWorld()->GetMapName();
+		CurrentLevel.RemoveFromStart(GetWorld()->StreamingLevelsPrefix); // 레벨 이름 앞에 접두사 _ 제거
+		if (CurrentLevel == "LV_Test")
 		{
-			InGameUI = CreateWidget<UInGameWidget>(this, InGameWidgetClass);
-			if (InGameUI)
+			// 인게임 UI
+			if (InGameWidgetClass)
 			{
-				InGameUI->AddToViewport();
+				InGameUI = CreateWidget<UInGameWidget>(this, InGameWidgetClass);
+				if (InGameUI) InGameUI->AddToViewport();
 			}
 		}
+#pragma endregion
 	}
 
 	// 마우스 커서 항상 표시
@@ -68,8 +75,10 @@ void ABRPlayerController::SetInputEnable(bool bEnable)
 void ABRPlayerController::OnTurnPlayerChanged()
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS) return;
+
 	ABRPlayerState* TurnPlayerState = Cast<ABRPlayerState>(GS->TurnPlayer);
-	if (!GS || !TurnPlayerState || !InGameUI) return;
+	if (!TurnPlayerState || !InGameUI) return;
 
 	// UI에 턴 플레이어 닉네임 업데이트
 	FString Nick = TurnPlayerState->GetPlayerName();
@@ -77,6 +86,19 @@ void ABRPlayerController::OnTurnPlayerChanged()
 
 	// 내 턴인지 확인 후 입력 제어
 	SetInputEnable(TurnPlayerState == PlayerState);
+}
+
+void ABRPlayerController::OnUpdateGameInfo()
+{
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS || !InGameUI) return;
+
+	// PlayerState에서 닉네임 가져오기 (자기 기준으로)
+	TArray<APlayerState*> Players = GS->PlayerArray;
+	FString Player1Nick = Players[0]->GetPlayerName();
+	FString Player2Nick = Players[1]->GetPlayerName();
+
+	InGameUI->UpdateGameInfo(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->Hp, GS->NumLive, GS->NumBlank);
 }
 
 void ABRPlayerController::TryFire()

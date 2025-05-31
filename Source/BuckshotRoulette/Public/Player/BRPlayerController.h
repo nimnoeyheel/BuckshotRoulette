@@ -28,6 +28,9 @@ public:
 	UFUNCTION()
 	void OnTurnPlayerChanged();
 
+	UFUNCTION()
+	void OnUpdateGameInfo();
+
 	void TryFire();
 
 	UFUNCTION(Server, Reliable)

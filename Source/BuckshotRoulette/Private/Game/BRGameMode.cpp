@@ -130,11 +130,13 @@ void ABRGameMode::NextTurn()
 void ABRGameMode::OnRoundEnd()
 {
 	++CurrentRoundIdx;
+	// 해당 매치의 라운드가 끝나지 않았으면 (+ 플레이어 HP도 확인해야 함)
 	if (AllMatches[CurrentMatchIdx].Rounds.IsValidIndex(CurrentRoundIdx))
 	{
 		SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
 		// 라운드별 초기화
 	}
+	// 이전 매치의 라운드가 끝나면 새로운 매치로 갱신
 	else
 	{
 		++CurrentMatchIdx;
@@ -149,10 +151,8 @@ void ABRGameMode::OnRoundEnd()
 			// 게임 전체 종료
 		}
 	}
-
 }
 
-TArray<FMatchConfig> AllMatches;
 void ABRGameMode::InitMatchConfigs()
 {
 	AllMatches.Empty();
@@ -214,7 +214,37 @@ void ABRGameMode::SetupAmmoForRound(int32 MatchIdx, int32 RoundIdx)
 		NewAmmo.Swap(i, SwapIdx);
 	}
 
+	// 서버에서 Replicated 변수 업데이트
 	ABRGameState* GS = GetGameState<ABRGameState>();
+
 	GS->AmmoSequence = NewAmmo;
 	GS->CurrentAmmoIndex = 0;
+	GS->MatchIdx = MatchIdx + 1;
+	GS->RoundIdx = RoundIdx + 1;
+	GS->Hp = AllMatches[MatchIdx].PlayerHP;
+	GS->NumLive = Round.NumLive;
+	GS->NumBlank = Round.NumBlank;
+
+	// 서버의 UI도 업데이트해주기 위해 직접 호출
+	GS->OnRep_UpdateGameInfo();
+
+	// 랜덤 장전 디버깅용
+	for (int i = 0; i < GS->AmmoSequence.Num(); ++i)
+	{
+		FString AmmoTypeName;
+		switch (GS->AmmoSequence[i])
+		{
+			case EAmmoType::Live:
+				AmmoTypeName = TEXT("Live");
+				break;
+			case EAmmoType::Blank:
+				AmmoTypeName = TEXT("Blank");
+				break;
+			default:
+				AmmoTypeName = TEXT("Unknown");
+				break;
+		}
+		FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
+	}
 }

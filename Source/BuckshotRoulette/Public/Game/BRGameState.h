@@ -16,6 +16,9 @@ class BUCKSHOTROULETTE_API ABRGameState : public AGameStateBase
 	GENERATED_BODY()
 	
 public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const override;
+
+#pragma region 턴 시스템
 	// 턴 플레이어
 	UPROPERTY(ReplicatedUsing=OnRep_TurnPlayer)
 	class APlayerState* TurnPlayer;
@@ -27,12 +30,31 @@ public:
 	// 현재 턴 플레이어 세팅 (서버 only)
 	void SetTurnPlayer(class APlayerState* NewTurnPlayer);
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const override;
+#pragma endregion
 	
-	// 총알 시스템
+#pragma region 총알 시스템
 	UPROPERTY(Replicated)
 	TArray<EAmmoType> AmmoSequence;
 
 	UPROPERTY(Replicated)
 	int32 CurrentAmmoIndex = 0;
+#pragma endregion
+
+#pragma region InGameUI 반영을 위한 데이터 동기화
+	// UI 업데이트를 위한 OnRep_함수
+	UFUNCTION()
+	void OnRep_UpdateGameInfo();
+
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	int32 MatchIdx;
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	int32 RoundIdx;
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	int32 Hp;
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	int32 NumLive;
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	int32 NumBlank;
+#pragma endregion
+
 };

@@ -18,11 +18,9 @@ public:
 	virtual void NativeConstruct() override;
 
 public:
+// 게임 시작할 때 닉네임 입력
 	UFUNCTION()
 	void HideNicknameEntryWidget();
-
-	UFUNCTION()
-	void UpdateTurnNickname(const FString& Nickname);
 
     UPROPERTY(meta = (BindWidget))
     class UNicknameEntryWidget* NicknameEntryWidget;
@@ -30,9 +28,48 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UOverlay* Overlay_NicknameEntry;
 	
+// 턴 플레이어
+	UFUNCTION()
+	void UpdateTurnNickname(const FString& Nickname);
+
 	UPROPERTY(meta = (BindWidget))
 	class UOverlay* Overlay_Turn;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Txt_Nickname;
+	class UTextBlock* Txt_TurnPlayerName;
+
+// 플레이 시 매치 및 라운드 정보
+	UFUNCTION()
+	void UpdateGameInfo(int32 MatchIdx, int32 RoundIdx, const FString& Player1Nick, const FString& Player2Nick, int32 HP, int32 NumLive, int32 NumBlank);
+
+	UPROPERTY(meta = (BindWidget))
+	class UOverlay* Overlay_Ammo;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_MatchNum;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_RoundNum;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_Player1;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_Player2;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_Player1Hp;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_Player2Hp;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_AmmoInfo;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UOverlay* Overlay_Subtitle;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_Subtitle;
+
 };

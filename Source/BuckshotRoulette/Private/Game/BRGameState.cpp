@@ -4,6 +4,7 @@
 #include "Game/BRGameState.h"
 #include "Net/UnrealNetwork.h"
 #include "Player/BRPlayerController.h"
+#include "UI/InGameWidget.h"
 
 void ABRGameState::SetTurnPlayer(APlayerState* NewTurnPlayer)
 {
@@ -11,6 +12,18 @@ void ABRGameState::SetTurnPlayer(APlayerState* NewTurnPlayer)
 	{
 		TurnPlayer = NewTurnPlayer;
 		OnRep_TurnPlayer();
+	}
+}
+
+void ABRGameState::OnRep_UpdateGameInfo()
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
+		if (PC && PC->IsLocalController())
+		{
+			PC->OnUpdateGameInfo();
+		}
 	}
 }
 
@@ -25,12 +38,15 @@ void ABRGameState::OnRep_TurnPlayer()
 			PC->OnTurnPlayerChanged();
 		}
 	}
-	
-	// UI에서 턴 변경 알림 처리
 }
 
 void ABRGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABRGameState, TurnPlayer);
+	DOREPLIFETIME(ABRGameState, MatchIdx);
+	DOREPLIFETIME(ABRGameState, RoundIdx);
+	DOREPLIFETIME(ABRGameState, Hp);
+	DOREPLIFETIME(ABRGameState, NumLive);
+	DOREPLIFETIME(ABRGameState, NumBlank);
 }

@@ -69,6 +69,8 @@ public:
 	// 장전 시 실탄, 공탄 랜덤 장전
 	void SetupAmmoForRound(int32 MatchIdx, int32 RoundIdx);
 
+	TArray<FMatchConfig> AllMatches;
+
 	int32 CurrentMatchIdx = 0;
 	int32 CurrentRoundIdx = 0;
 #pragma endregion
