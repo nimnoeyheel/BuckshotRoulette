@@ -30,7 +30,10 @@ public:
 	bool bNicknameEntered = false;
 
 	// 플레이어 HP
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+	UFUNCTION()
+	void OnRep_Hp();
+
+	UPROPERTY(ReplicatedUsing = OnRep_Hp)
     int32 Hp = 0;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

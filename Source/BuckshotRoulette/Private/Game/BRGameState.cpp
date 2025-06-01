@@ -15,14 +15,28 @@ void ABRGameState::SetTurnPlayer(APlayerState* NewTurnPlayer)
 	}
 }
 
-void ABRGameState::OnRep_UpdateGameInfo()
+void ABRGameState::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
 {
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
+		if (PC)
+		{
+			PC->OnFireResult(TargetPlayerIndex, FiredAmmo);
+		}
+	}
+}
+
+void ABRGameState::OnRep_UpdateNewRound()
+{
+	// 모든 PlayerController에 새로운 라운드 정보 업데이트 알림
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
 		if (PC && PC->IsLocalController())
 		{
-			PC->OnUpdateGameInfo();
+			PC->OnUpdateNewRound();
 		}
 	}
 }
@@ -46,7 +60,6 @@ void ABRGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ABRGameState, TurnPlayer);
 	DOREPLIFETIME(ABRGameState, MatchIdx);
 	DOREPLIFETIME(ABRGameState, RoundIdx);
-	DOREPLIFETIME(ABRGameState, Hp);
 	DOREPLIFETIME(ABRGameState, NumLive);
 	DOREPLIFETIME(ABRGameState, NumBlank);
 }

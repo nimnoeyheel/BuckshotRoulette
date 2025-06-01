@@ -23,27 +23,34 @@ protected:
 	virtual void SetupInputComponent() override;
 
 public:
-	// 내 턴인지 확인하는 함수
+// 턴 시스템
 	bool IsMyTurn();
 
-	// 턴에 따라 입력 제어 함수
 	void SetInputEnable(bool bEnable);
 
 	UFUNCTION()
 	void OnTurnPlayerChanged();
 
+// 새로운 라운드 정보 업데이트
 	UFUNCTION()
-	void OnUpdateGameInfo();
+	void OnUpdateNewRound();
 
-	// 발사 시스템
+// 플레이어 HP 업데이트
+	UFUNCTION()
+	void OnUpdateHp();
+
+// 발사 시스템
 	UFUNCTION()
 	void OnTargetSelected(int32 TargetPlayerIndex);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_RequestFire(int32 TargetPlayerIndex);
 
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_FireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo);
+	//UFUNCTION(NetMulticast, Reliable)
+	//void Multicast_FireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo);
+
+	UFUNCTION()
+	void OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo);
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")

@@ -111,7 +111,7 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	SetInputEnable(TurnPlayerState == PlayerState);
 }
 
-void ABRPlayerController::OnUpdateGameInfo()
+void ABRPlayerController::OnUpdateNewRound()
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	if (!GS || !InGameUI) return;
@@ -121,7 +121,30 @@ void ABRPlayerController::OnUpdateGameInfo()
 	FString Player1Nick = Players[0]->GetPlayerName();
 	FString Player2Nick = Players[1]->GetPlayerName();
 
-	InGameUI->UpdateGameInfo(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->Hp, GS->NumLive, GS->NumBlank);
+	InGameUI->UpdateNewRound(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->NumLive, GS->NumBlank);
+}
+
+void ABRPlayerController::OnUpdateHp()
+{
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS || !InGameUI) return;
+
+	TArray<APlayerState*> Players = GS->PlayerArray;
+
+	int32 Player1Hp = -1;
+	int32 Player2Hp = -1;
+	for(APlayerState* PS : Players)
+	{
+		ABRPlayerState* BPS = Cast<ABRPlayerState>(PS);
+		if (BPS->PlayerIndex == 1) Player1Hp = BPS->Hp;
+		if (BPS->PlayerIndex == 2) Player2Hp = BPS->Hp;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("%s HP : %d"), *Players[0]->GetPlayerName(), Player1Hp);
+	UE_LOG(LogTemp, Log, TEXT("%s HP : %d"), *Players[1]->GetPlayerName(), Player2Hp);
+
+	// 모든 플레이어의 HP UI 업데이트
+	InGameUI->UpdatePlayerHp(Player1Hp, Player2Hp);
 }
 
 void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
@@ -136,64 +159,72 @@ void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
 	ServerRPC_RequestFire(TargetPlayerIndex);
 }
 
-void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlayerIndex)
-{
-	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-	if (!GS) return;
-
-	// 총알 소진 체크
-	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num()) return;
-
-	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
-	GS->CurrentAmmoIndex++;
-
-	// 결과를 모든 클라에 Multicast로 알림
-	Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
-}
-
-void ABRPlayerController::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
+void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
 {
 	// 타겟 플레이어의 HP 감소 / 턴 전환 / 승패
 	// 사망, UI 이펙트, 사운드, 카메라 셰이크 등
 
+	UE_LOG(LogTemp, Log, TEXT("%s Called OnFireResult"), *PlayerState->GetPlayerName());
+
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-	if (!GS || !GM) return;
+	// GameMode null 이다!!!!
+	if (!GS || !GM || !InGameUI) return;
+
+	if (!GS) UE_LOG(LogTemp, Log, TEXT("GS is null..")); return;
+	if (!GM) UE_LOG(LogTemp, Log, TEXT("GM is null..")); return;
+	if (!InGameUI) UE_LOG(LogTemp, Log, TEXT("InGameUI is null..")); return;
 
 	TArray<APlayerState*> Players = GS->PlayerArray;
-	if (!Players.IsValidIndex(TargetPlayerIndex)) return;
+	if (!Players.IsValidIndex(TargetPlayerIndex))
+	{
+		UE_LOG(LogTemp, Log, TEXT("TargetPlayerIndex is Not ValidIndex.."));
+		return;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("TargetPlayerIndex is %d"), TargetPlayerIndex);
+	}
 
 	ABRPlayerState* MyState = Cast<ABRPlayerState>(PlayerState);
 	ABRPlayerState* TargetState = Cast<ABRPlayerState>(Players[TargetPlayerIndex]);
+	
+	if (!MyState) UE_LOG(LogTemp, Log, TEXT("MyState is null..")); return;
+	if(!TargetState) UE_LOG(LogTemp, Log, TEXT("TargetState is null..")); return;
+
 	ABRPlayerState* OpponentState = nullptr;
 	for (APlayerState* PS : Players)
 	{
 		if (PS != MyState) OpponentState = Cast<ABRPlayerState>(PS);
 	}
 
+	UE_LOG(LogTemp, Log, TEXT("TargetPlayer is %s"), *TargetState->GetPlayerName());
+
 	// 내가 타겟일 때
 	if (MyState == TargetState)
 	{
 		if (FiredAmmo == EAmmoType::Live)
 		{
-			// MyState->Hp--;
+			MyState->Hp--;
+			OnUpdateHp();
+			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *MyState->GetPlayerName());
 
 			// 체력이 0이하라면
-			//if(MyState->Hp <= 0)
+			if (MyState->Hp <= 0)
 			{
 				// 해당 라운드 종료 (I Lose)
 				// InGameUI->ShoResult(false) 패배 UI 처리
 				GM->OnRoundEnd();
 				return;
 			}
-			
+
 			// 턴 전환 (상대 턴)
 			if (IsLocalController())
 			{
 				GM->NextTurn();
 			}
 		}
-		else // Blank
+		else if (FiredAmmo == EAmmoType::Blank)
 		{
 			// 내 턴 유지
 		}
@@ -204,26 +235,149 @@ void ABRPlayerController::Multicast_FireResult_Implementation(int32 TargetPlayer
 	{
 		if (FiredAmmo == EAmmoType::Live)
 		{
-			//OpponentState->Hp--;
+			OpponentState->Hp--;
+			OnUpdateHp();
+			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *OpponentState->GetPlayerName());
 
-			// if(OpponentState->Hp <= 0)
+			if (OpponentState->Hp <= 0)
 			{
 				// 해당 라운드 종료 (I Win)
 				// InGameUI->ShoResult(true) 승리 UI 처리
 				GM->OnRoundEnd();
 				return;
 			}
-			
+
 			// 턴 전환 (내 턴)
 			if (IsLocalController())
 			{
 				GM->NextTurn();
 			}
 		}
-		else // Blank
+		else if (FiredAmmo == EAmmoType::Blank)
 		{
 			GM->NextTurn();
 		}
 	}
-
 }
+
+void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlayerIndex)
+{
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS) return;
+
+	// 총알 소진 체크
+	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Ammo is empty.."));
+		return;
+	}
+
+	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
+	GS->CurrentAmmoIndex++;
+
+	if (FiredAmmo == EAmmoType::Live)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Live"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Blank"));
+	}
+
+	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
+	//Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
+
+	// 그래서 GameState(또는 GameMode)에서 모든 PC를 순회하면서 함수를 직접 호출해보자.
+	GS->Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
+}
+
+//void ABRPlayerController::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
+//{
+//	// 타겟 플레이어의 HP 감소 / 턴 전환 / 승패
+//	// 사망, UI 이펙트, 사운드, 카메라 셰이크 등
+//
+//	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+//	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+//	//if (!GS || !GM || !InGameUI) return;
+//
+//	if (!GS) UE_LOG(LogTemp, Log, TEXT("GS is null..")); return;
+//	if (!GM) UE_LOG(LogTemp, Log, TEXT("GM is null..")); return;
+//	if (!InGameUI) UE_LOG(LogTemp, Log, TEXT("InGameUI is null..")); return;
+//
+//	TArray<APlayerState*> Players = GS->PlayerArray;
+//	if (!Players.IsValidIndex(TargetPlayerIndex))
+//	{
+//		UE_LOG(LogTemp, Log, TEXT("TargetPlayerIndex is Not ValidIndex.."));
+//		return;
+//	}
+//
+//	ABRPlayerState* MyState = Cast<ABRPlayerState>(PlayerState);
+//	ABRPlayerState* TargetState = Cast<ABRPlayerState>(Players[TargetPlayerIndex]);
+//	ABRPlayerState* OpponentState = nullptr;
+//	for (APlayerState* PS : Players)
+//	{
+//		if (PS != MyState) OpponentState = Cast<ABRPlayerState>(PS);
+//	}
+//
+//	UE_LOG(LogTemp, Log, TEXT("TargetPlayer is %s"), *TargetState->GetPlayerName());
+//
+//	// 내가 타겟일 때
+//	if (MyState == TargetState)
+//	{
+//		if (FiredAmmo == EAmmoType::Live)
+//		{
+//			MyState->Hp--;
+//			OnUpdateHp();
+//			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *MyState->GetPlayerName());
+//
+//			// 체력이 0이하라면
+//			if(MyState->Hp <= 0)
+//			{
+//				// 해당 라운드 종료 (I Lose)
+//				// InGameUI->ShoResult(false) 패배 UI 처리
+//				GM->OnRoundEnd();
+//				return;
+//			}
+//			
+//			// 턴 전환 (상대 턴)
+//			if (IsLocalController())
+//			{
+//				GM->NextTurn();
+//			}
+//		}
+//		else if (FiredAmmo == EAmmoType::Blank)
+//		{
+//			// 내 턴 유지
+//		}
+//	}
+//
+//	// 상대가 타겟일 때
+//	else if (OpponentState == TargetState)
+//	{
+//		if (FiredAmmo == EAmmoType::Live)
+//		{
+//			OpponentState->Hp--;
+//			OnUpdateHp();
+//			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *OpponentState->GetPlayerName());
+//
+//			if(OpponentState->Hp <= 0)
+//			{
+//				// 해당 라운드 종료 (I Win)
+//				// InGameUI->ShoResult(true) 승리 UI 처리
+//				GM->OnRoundEnd();
+//				return;
+//			}
+//			
+//			// 턴 전환 (내 턴)
+//			if (IsLocalController())
+//			{
+//				GM->NextTurn();
+//			}
+//		}
+//		else if (FiredAmmo == EAmmoType::Blank)
+//		{
+//			GM->NextTurn();
+//		}
+//	}
+//
+//}

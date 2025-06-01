@@ -4,6 +4,8 @@
 #include "Player/BRPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "Game/BRGameMode.h"
+#include "Player/BRPlayerController.h"
+#include "Game/BRGameState.h"
 
 void ABRPlayerState::ServerRPC_SetPlayerName_Implementation(const FString& NewName)
 {
@@ -30,7 +32,20 @@ void ABRPlayerState::OnRep_PlayerName()
 {
 	Super::OnRep_PlayerName();
 	UE_LOG(LogTemp, Log, TEXT("[CLIENT%d] Nickname: %s"), PlayerIndex , *GetPlayerName());
-	// UI 업데이트
+	// @Todo 닉네임 UI 업데이트
+}
+
+void ABRPlayerState::OnRep_Hp()
+{
+	// 모든 PlayerController에 알림 (각자 자기 화면에만 반영)
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
+		if (PC && PC->IsLocalController())
+		{
+			PC->OnUpdateHp();
+		}
+	}
 }
 
 void ABRPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

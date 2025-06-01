@@ -41,12 +41,22 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_TurnPlayerName;
 
-// 플레이 시 매치 및 라운드 정보
+// 플레이어 HP
 	UFUNCTION()
-	void UpdateGameInfo(int32 MatchIdx, int32 RoundIdx, const FString& Player1Nick, const FString& Player2Nick, int32 HP, int32 NumLive, int32 NumBlank);
+	void UpdatePlayerHp(int32 Player1Hp, int32 Player2Hp);
 
 	UPROPERTY(meta = (BindWidget))
-	class UOverlay* Overlay_Ammo;
+	class UTextBlock* Txt_Player1Hp;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_Player2Hp;
+
+// 새로운 라운드 정보
+	UFUNCTION()
+	void UpdateNewRound(int32 MatchIdx, int32 RoundIdx, const FString& Player1Nick, const FString& Player2Nick, int32 NumLive, int32 NumBlank);
+
+	UPROPERTY(meta = (BindWidget))
+	class UOverlay* Overlay_RoundInfo;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_MatchNum;
@@ -59,12 +69,6 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_Player2;
-	
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Txt_Player1Hp;
-	
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Txt_Player2Hp;
 	
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_AmmoInfo;

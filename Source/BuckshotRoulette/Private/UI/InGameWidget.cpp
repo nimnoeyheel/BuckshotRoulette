@@ -23,7 +23,7 @@ void UInGameWidget::NativeConstruct()
 	}
 
 	SetVisibleOverlay(Overlay_Turn, false);
-	SetVisibleOverlay(Overlay_Ammo, false);
+	SetVisibleOverlay(Overlay_RoundInfo, false);
 	SetVisibleOverlay(Overlay_Subtitle, false);
 	SetVisibleOverlay(Overlay_TargetSelect, false);
 }
@@ -45,14 +45,18 @@ void UInGameWidget::UpdateTurnNickname(const FString& Nickname)
 	SetVisibleOverlay(Overlay_Turn, true);
 }
 
-void UInGameWidget::UpdateGameInfo(int32 MatchIdx, int32 RoundIdx, const FString& Player1Nick, const FString& Player2Nick, int32 HP, int32 NumLive, int32 NumBlank)
+void UInGameWidget::UpdatePlayerHp(int32 Player1Hp, int32 Player2Hp)
+{
+	Txt_Player1Hp->SetText(FText::AsNumber(Player1Hp));
+	Txt_Player2Hp->SetText(FText::AsNumber(Player2Hp));
+}
+
+void UInGameWidget::UpdateNewRound(int32 MatchIdx, int32 RoundIdx, const FString& Player1Nick, const FString& Player2Nick, int32 NumLive, int32 NumBlank)
 {
 	Txt_MatchNum->SetText(FText::AsNumber(MatchIdx));
 	Txt_RoundNum->SetText(FText::AsNumber(RoundIdx));
 	Txt_Player1->SetText(FText::FromString(Player1Nick));
 	Txt_Player2->SetText(FText::FromString(Player2Nick));
-	Txt_Player1Hp->SetText(FText::AsNumber(HP));
-	Txt_Player2Hp->SetText(FText::AsNumber(HP));
 
 	FString AmmoInfo = FString::Printf(TEXT("%d Live, %d Blank"), NumLive, NumBlank);
 	FString Msg = FString::Printf(TEXT("They enter the chamber in a hidden sequence."));
@@ -60,7 +64,7 @@ void UInGameWidget::UpdateGameInfo(int32 MatchIdx, int32 RoundIdx, const FString
 	Txt_AmmoInfo->SetText(FText::FromString(AmmoInfo));
 	Txt_Subtitle->SetText(FText::FromString(Msg));
 
-	SetVisibleOverlay(Overlay_Ammo, true);
+	SetVisibleOverlay(Overlay_RoundInfo, true);
 	SetVisibleSubtitle(true);
 }
 

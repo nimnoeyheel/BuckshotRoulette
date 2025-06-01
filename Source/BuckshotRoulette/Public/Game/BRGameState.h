@@ -33,6 +33,9 @@ public:
 #pragma endregion
 	
 #pragma region 총알 시스템
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_FireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo);
+
 	UPROPERTY(Replicated)
 	TArray<EAmmoType> AmmoSequence;
 
@@ -43,17 +46,15 @@ public:
 #pragma region InGameUI 반영을 위한 데이터 동기화
 	// UI 업데이트를 위한 OnRep_함수
 	UFUNCTION()
-	void OnRep_UpdateGameInfo();
+	void OnRep_UpdateNewRound();
 
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateNewRound)
 	int32 MatchIdx;
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateNewRound)
 	int32 RoundIdx;
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
-	int32 Hp;
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateNewRound)
 	int32 NumLive;
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateGameInfo)
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateNewRound)
 	int32 NumBlank;
 #pragma endregion
 
