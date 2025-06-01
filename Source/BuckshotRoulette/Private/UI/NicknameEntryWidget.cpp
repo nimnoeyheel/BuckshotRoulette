@@ -56,11 +56,10 @@ void UNicknameEntryWidget::OnEntryButtonClicked()
         if (PS)
         {
             // 서버로 닉네임 전달
-            PS->ServerRPCSetPlayerName(LastValidNickname);
+            PS->ServerRPC_SetPlayerName(LastValidNickname);
 
             // 닉네임 완료 알림
             OnNicknameEntryComplete.Broadcast();
-            //SetVisibility(ESlateVisibility::Hidden);
         }
     }
 }

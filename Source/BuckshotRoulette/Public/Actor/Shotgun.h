@@ -30,4 +30,13 @@ protected:
 	// 오버랩 영역 (상호작용)
 	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* OverlapBox;
+
+    UFUNCTION()
+    void OnBeginMouseOver(UPrimitiveComponent* TouchedComponent);
+
+    UFUNCTION()
+    void OnEndMouseOver(UPrimitiveComponent* TouchedComponent);
+
+    UFUNCTION()
+    void OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
 };

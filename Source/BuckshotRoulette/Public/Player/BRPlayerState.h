@@ -19,7 +19,7 @@ public:
 
 	// 클라이언트에서 직접 닉네임 입력받을 때
 	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerRPCSetPlayerName(const FString& NewName);
+	void ServerRPC_SetPlayerName(const FString& NewName);
 
 	// 플레이어 구분 인덱스 설정
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)

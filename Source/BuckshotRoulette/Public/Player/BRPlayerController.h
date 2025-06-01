@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Types/AmmoType.h"
 #include "GameFramework/PlayerController.h"
 #include "BRPlayerController.generated.h"
 
@@ -31,10 +32,15 @@ public:
 	UFUNCTION()
 	void OnUpdateGameInfo();
 
-	void TryFire();
+	// 발사 시스템
+	UFUNCTION()
+	void OnTargetSelected(int32 TargetPlayerIndex);
 
 	UFUNCTION(Server, Reliable)
-	void ServerRPCFireActor();
+	void ServerRPC_RequestFire(int32 TargetPlayerIndex);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_FireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo);
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")

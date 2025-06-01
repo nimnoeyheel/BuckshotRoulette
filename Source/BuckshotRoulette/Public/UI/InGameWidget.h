@@ -16,6 +16,9 @@ class BUCKSHOTROULETTE_API UInGameWidget : public UUserWidget
 	
 public:
 	virtual void NativeConstruct() override;
+	
+	UFUNCTION()
+	void SetVisibleOverlay(UOverlay* Overlay, bool bVisible);
 
 public:
 // 게임 시작할 때 닉네임 입력
@@ -66,10 +69,30 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_AmmoInfo;
 	
+// 자막 오버레이
+	UFUNCTION()
+	void SetVisibleSubtitle(bool bVisible);
+
 	UPROPERTY(meta = (BindWidget))
 	class UOverlay* Overlay_Subtitle;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_Subtitle;
+
+// 발사 시 타겟 선택
+	UFUNCTION()
+	void ShowFireRuleSubtitle();
+	
+	UFUNCTION()
+	void ShowTargetSelectUI();
+
+	UFUNCTION()
+	void OnTargetSelected_Internal(int32 TargetPlayerIndex);
+
+	UPROPERTY(meta = (BindWidget))
+	class UTargetSelectWidget* TargetSelectWidget;
+
+	UPROPERTY(meta = (BindWidget))
+	class UOverlay* Overlay_TargetSelect; // 배치용 오버레이
 
 };

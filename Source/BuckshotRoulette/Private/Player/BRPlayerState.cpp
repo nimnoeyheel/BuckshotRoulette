@@ -5,7 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Game/BRGameMode.h"
 
-void ABRPlayerState::ServerRPCSetPlayerName_Implementation(const FString& NewName)
+void ABRPlayerState::ServerRPC_SetPlayerName_Implementation(const FString& NewName)
 {
 	SetPlayerName(NewName);
 	bNicknameEntered = true;
@@ -21,7 +21,7 @@ void ABRPlayerState::ServerRPCSetPlayerName_Implementation(const FString& NewNam
 	}
 }
 
-bool ABRPlayerState::ServerRPCSetPlayerName_Validate(const FString& NewName)
+bool ABRPlayerState::ServerRPC_SetPlayerName_Validate(const FString& NewName)
 {
 	return true;
 }

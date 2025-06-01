@@ -7,6 +7,7 @@
 #include "Game/BRGameState.h"
 #include "Game/BRGameMode.h"
 #include "UI/InGameWidget.h"
+#include "Types/AmmoType.h"
 #include "GameFramework/PlayerState.h"
 
 ABRPlayerController::ABRPlayerController()
@@ -51,19 +52,17 @@ void ABRPlayerController::BeginPlay()
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
 
-	// 입력 모드: UI+게임 모두 가능하게
+	// 입력 모드: 시작할 때 UI만 가능하게 설정
+	//FInputModeUIOnly InputMode;
 	FInputModeGameAndUI InputMode;
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	InputMode.SetHideCursorDuringCapture(false);
 	SetInputMode(InputMode);
 }
 
 void ABRPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-
-	// Fire
-	InputComponent->BindAction("Fire", IE_Pressed, this, &ABRPlayerController::TryFire);
+	
 }
 
 void ABRPlayerController::SetInputEnable(bool bEnable)
@@ -101,7 +100,7 @@ void ABRPlayerController::OnUpdateGameInfo()
 	InGameUI->UpdateGameInfo(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->Hp, GS->NumLive, GS->NumBlank);
 }
 
-void ABRPlayerController::TryFire()
+void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
 {
 	// 해당 로직은 입력 제어를 추가했기 때문에 Fire 함수가 호출될 일이 없으므로 주석 처리
 	// 내 턴이 아니면 리턴
@@ -110,18 +109,35 @@ void ABRPlayerController::TryFire()
 	//if(GS->TurnPlayer != PlayerState) return;
 
 	// 서버에 RPC로 명령 전달
-	ServerRPCFireActor();
+	
+	ServerRPC_RequestFire(TargetPlayerIndex);
 }
 
-void ABRPlayerController::ServerRPCFireActor_Implementation()
+void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlayerIndex)
 {
-	// 총알 로직 발사
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS) return;
 
 	// 성공 여부 판단 (액션 유효성 체크)
+	// 총알 소진 체크
+	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num()) return;
+
+	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
+	GS->CurrentAmmoIndex++;
+
+	// 결과를 모든 클라에 Multicast로 알림
+	Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
+
 	// 턴 넘김
 	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
 	if (GM)
 	{
 		GM->NextTurn();
 	}
+}
+
+void ABRPlayerController::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
+{
+	// 타겟 플레이어의 HP 감소 / 사망, UI 이펙트, 사운드, 카메라 진동 등
+	// (Client에서 Multicast 함수에서 처리)
 }
