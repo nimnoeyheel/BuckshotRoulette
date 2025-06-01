@@ -7,7 +7,7 @@
 void UTargetSelectWidget::NativeConstruct()
 {
     if (Btn_Self) Btn_Self->OnClicked.AddDynamic(this, &UTargetSelectWidget::OnSelfClicked);
-    if (Btn_Other) Btn_Other->OnClicked.AddDynamic(this, &UTargetSelectWidget::OnOtherClicked);
+    if (Btn_Opponent) Btn_Opponent->OnClicked.AddDynamic(this, &UTargetSelectWidget::OnOpponentClicked);
 }
 
 void UTargetSelectWidget::OnSelfClicked()
@@ -15,7 +15,7 @@ void UTargetSelectWidget::OnSelfClicked()
     OnTargetSelected.Broadcast(0); // 0: 자신
 }
 
-void UTargetSelectWidget::OnOtherClicked()
+void UTargetSelectWidget::OnOpponentClicked()
 {
     OnTargetSelected.Broadcast(1); // 1: 상대
 }

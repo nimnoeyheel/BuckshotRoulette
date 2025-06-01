@@ -87,7 +87,7 @@ void UInGameWidget::SetVisibleSubtitle(bool bVisible)
 
 void UInGameWidget::ShowFireRuleSubtitle()
 {
-	FString Msg = FString::Printf(TEXT("Shooting yourself with a blank skips the Other's Turn."));
+	FString Msg = FString::Printf(TEXT("Shooting yourself with a blank skips the Opponent's Turn."));
 	Txt_Subtitle->SetText(FText::FromString(Msg));
 
 	SetVisibleOverlay(Overlay_Subtitle, true);

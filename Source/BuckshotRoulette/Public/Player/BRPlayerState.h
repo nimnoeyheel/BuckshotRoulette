@@ -29,5 +29,9 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bNicknameEntered = false;
 
+	// 플레이어 HP
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+    int32 Hp = 0;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

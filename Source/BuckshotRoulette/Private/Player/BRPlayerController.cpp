@@ -133,7 +133,6 @@ void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
 	//if(GS->TurnPlayer != PlayerState) return;
 
 	// 서버에 RPC로 명령 전달
-	
 	ServerRPC_RequestFire(TargetPlayerIndex);
 }
 
@@ -142,7 +141,6 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	if (!GS) return;
 
-	// 성공 여부 판단 (액션 유효성 체크)
 	// 총알 소진 체크
 	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num()) return;
 
@@ -151,17 +149,81 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 
 	// 결과를 모든 클라에 Multicast로 알림
 	Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
-
-	// 턴 넘김
-	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-	if (GM)
-	{
-		GM->NextTurn();
-	}
 }
 
 void ABRPlayerController::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
 {
-	// 타겟 플레이어의 HP 감소 / 사망, UI 이펙트, 사운드, 카메라 진동 등
-	// (Client에서 Multicast 함수에서 처리)
+	// 타겟 플레이어의 HP 감소 / 턴 전환 / 승패
+	// 사망, UI 이펙트, 사운드, 카메라 셰이크 등
+
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+	if (!GS || !GM) return;
+
+	TArray<APlayerState*> Players = GS->PlayerArray;
+	if (!Players.IsValidIndex(TargetPlayerIndex)) return;
+
+	ABRPlayerState* MyState = Cast<ABRPlayerState>(PlayerState);
+	ABRPlayerState* TargetState = Cast<ABRPlayerState>(Players[TargetPlayerIndex]);
+	ABRPlayerState* OpponentState = nullptr;
+	for (APlayerState* PS : Players)
+	{
+		if (PS != MyState) OpponentState = Cast<ABRPlayerState>(PS);
+	}
+
+	// 내가 타겟일 때
+	if (MyState == TargetState)
+	{
+		if (FiredAmmo == EAmmoType::Live)
+		{
+			// MyState->Hp--;
+
+			// 체력이 0이하라면
+			//if(MyState->Hp <= 0)
+			{
+				// 해당 라운드 종료 (I Lose)
+				// InGameUI->ShoResult(false) 패배 UI 처리
+				GM->OnRoundEnd();
+				return;
+			}
+			
+			// 턴 전환 (상대 턴)
+			if (IsLocalController())
+			{
+				GM->NextTurn();
+			}
+		}
+		else // Blank
+		{
+			// 내 턴 유지
+		}
+	}
+
+	// 상대가 타겟일 때
+	else if (OpponentState == TargetState)
+	{
+		if (FiredAmmo == EAmmoType::Live)
+		{
+			//OpponentState->Hp--;
+
+			// if(OpponentState->Hp <= 0)
+			{
+				// 해당 라운드 종료 (I Win)
+				// InGameUI->ShoResult(true) 승리 UI 처리
+				GM->OnRoundEnd();
+				return;
+			}
+			
+			// 턴 전환 (내 턴)
+			if (IsLocalController())
+			{
+				GM->NextTurn();
+			}
+		}
+		else // Blank
+		{
+			GM->NextTurn();
+		}
+	}
+
 }

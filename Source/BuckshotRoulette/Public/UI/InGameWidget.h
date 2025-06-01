@@ -93,6 +93,6 @@ public:
 	class UTargetSelectWidget* TargetSelectWidget;
 
 	UPROPERTY(meta = (BindWidget))
-	class UOverlay* Overlay_TargetSelect; // 배치용 오버레이
+	class UOverlay* Overlay_TargetSelect;
 
 };

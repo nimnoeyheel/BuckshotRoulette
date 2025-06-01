@@ -23,7 +23,7 @@ public:
     UPROPERTY(meta = (BindWidget))
     class UButton* Btn_Self;
     UPROPERTY(meta = (BindWidget))
-    class UButton* Btn_Other;
+    class UButton* Btn_Opponent;
 
     // UI에서 타겟 선택 시 델리게이트로 알림
     UPROPERTY(BlueprintAssignable, Category="Event")
@@ -33,5 +33,5 @@ public:
     void OnSelfClicked();
 
     UFUNCTION()
-    void OnOtherClicked();
+    void OnOpponentClicked();
 };
