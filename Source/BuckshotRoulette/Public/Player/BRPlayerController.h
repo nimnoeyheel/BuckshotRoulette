@@ -23,6 +23,9 @@ protected:
 	virtual void SetupInputComponent() override;
 
 public:
+	// 내 턴인지 확인하는 함수
+	bool IsMyTurn();
+
 	// 턴에 따라 입력 제어 함수
 	void SetInputEnable(bool bEnable);
 

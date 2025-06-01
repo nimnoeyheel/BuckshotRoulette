@@ -53,8 +53,7 @@ void ABRPlayerController::BeginPlay()
 	bEnableMouseOverEvents = true;
 
 	// 입력 모드: 시작할 때 UI만 가능하게 설정
-	//FInputModeUIOnly InputMode;
-	FInputModeGameAndUI InputMode;
+	FInputModeUIOnly InputMode;
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
 }
@@ -65,10 +64,35 @@ void ABRPlayerController::SetupInputComponent()
 	
 }
 
+bool ABRPlayerController::IsMyTurn()
+{
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS || !GS->TurnPlayer) return false;
+
+	ABRPlayerState* TurnPlayerState = Cast<ABRPlayerState>(GS->TurnPlayer);
+	if (!TurnPlayerState) return false;
+
+	if (TurnPlayerState == PlayerState) return true;
+	else return false;
+}
+
 void ABRPlayerController::SetInputEnable(bool bEnable)
 {
-	if (bEnable) EnableInput(this);
-	else DisableInput(this);
+	// 내 턴일 때
+	if (bEnable)
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		InputMode.SetHideCursorDuringCapture(false);
+		SetInputMode(InputMode);
+	}
+	// 내 턴이 아닐 때
+	else
+	{
+		FInputModeUIOnly InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		SetInputMode(InputMode);
+	}
 }
 
 void ABRPlayerController::OnTurnPlayerChanged()

@@ -25,7 +25,7 @@ AShotgun::AShotgun()
 	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
 	OverlapBox->SetupAttachment(RootComponent);
 	OverlapBox->SetRelativeLocation(FVector(30, 0, 5)); // (X=30.000000,Y=0.000000,Z=5.000000)
-	OverlapBox->SetRelativeScale3D(FVector(1.6f, 0.1f, 0.2f)); // (X=1.600000,Y=0.100000,Z=0.200000)
+	OverlapBox->SetRelativeScale3D(FVector(1.6f, 0.35f, 0.45f)); // (X=1.600000,Y=0.350000,Z=0.450000)
 	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
 	OverlapBox->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -43,6 +43,7 @@ void AShotgun::BeginPlay()
 {
 	Super::BeginPlay();
 	
+
 }
 
 // Called every frame
@@ -55,22 +56,24 @@ void AShotgun::Tick(float DeltaTime)
 void AShotgun::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 {
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
-	if (!PC || !PC->InGameUI) return;
+	if (!PC || !PC->InGameUI || !PC->IsMyTurn()) return;
+
 	PC->InGameUI->ShowFireRuleSubtitle();
 }
 
 void AShotgun::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 {
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
-	if (!PC || !PC->InGameUI) return;
+	if (!PC || !PC->InGameUI || !PC->IsMyTurn()) return;
+
 	PC->InGameUI->SetVisibleSubtitle(false);
 }
 
 void AShotgun::OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
-	// 플레이어가 샷건 클릭 → 타겟 선택 UI 열기 (자신/상대)
-	// PlayerController에 이벤트 델리게이트 or 직접 함수로 알림
+	// 타겟 선택 UI 열기 (자신/상대)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
-	if (!PC || !PC->InGameUI) return;
+	if (!PC || !PC->InGameUI || !PC->IsMyTurn()) return;
+
 	PC->InGameUI->ShowTargetSelectUI();
 }
