@@ -46,11 +46,11 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_RequestFire(int32 TargetPlayerIndex);
 
-	//UFUNCTION(NetMulticast, Reliable)
-	//void Multicast_FireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo);
-
 	UFUNCTION()
 	void OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo);
+
+	UPROPERTY()
+	bool bIsLastAmmo = false;
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")

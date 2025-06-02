@@ -165,11 +165,7 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	if (!GS) return;
 
 	// 총알 소진 체크
-	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
-	{
-		UE_LOG(LogTemp, Log, TEXT("Ammo is empty.."));
-		return;
-	}
+	bIsLastAmmo = (GS->CurrentAmmoIndex + 1 >= GS->AmmoSequence.Num());
 
 	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
 	GS->CurrentAmmoIndex++;
@@ -225,19 +221,31 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			{
 				// 해당 라운드 종료 (I Lose)
 				// InGameUI->ShoResult(false) 패배 UI 처리
-				GM->OnRoundEnd();
-				return;
+
+				if (HasAuthority())
+				{
+					GM->OnRoundEnd();
+					return;
+				}
 			}
 
-			// 턴 전환 (상대 턴)
-			if (IsLocalController())
-			{
-				GM->NextTurn();
-			}
+			// 턴 전환
+			if (HasAuthority()) GM->NextTurn();
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
 		{
-			// 내 턴 유지
+			// 내 턴에 나를 쐈다면
+			if (MyState == GS->TurnPlayer)
+			{
+				// 턴 유지
+				UE_LOG(LogTemp, Log, TEXT("%s 턴 유지"), *MyState->GetPlayerName());
+			}
+			// 상대가 나를 쐈다면
+			else
+			{
+				// 턴 전환
+				if (HasAuthority()) GM->NextTurn();
+			}
 		}
 	}
 
@@ -254,110 +262,37 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			{
 				// 해당 라운드 종료 (I Win)
 				// InGameUI->ShoResult(true) 승리 UI 처리
-				GM->OnRoundEnd();
-				return;
+
+				if (HasAuthority())
+				{
+					GM->OnRoundEnd();
+					return;
+				}
 			}
 
-			// 턴 전환 (내 턴)
-			if (IsLocalController())
-			{
-				GM->NextTurn();
-			}
+			// 턴 전환
+			if (HasAuthority()) GM->NextTurn();
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
 		{
-			GM->NextTurn();
+			// 내 턴에 상대를 쐈다면
+			if (MyState == GS->TurnPlayer)
+			{
+				if (HasAuthority()) GM->NextTurn();
+			}
+			// 상대가 자기 자신을 쐈다면
+			else
+			{
+				// 턴 유지
+				UE_LOG(LogTemp, Log, TEXT("%s 턴 유지"), *OpponentState->GetPlayerName());
+			}
 		}
 	}
-}
 
-//void ABRPlayerController::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
-//{
-//	// 타겟 플레이어의 HP 감소 / 턴 전환 / 승패
-//	// 사망, UI 이펙트, 사운드, 카메라 셰이크 등
-//
-//	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-//	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-//	//if (!GS || !GM || !InGameUI) return;
-//
-//	if (!GS) UE_LOG(LogTemp, Log, TEXT("GS is null..")); return;
-//	if (!GM) UE_LOG(LogTemp, Log, TEXT("GM is null..")); return;
-//	if (!InGameUI) UE_LOG(LogTemp, Log, TEXT("InGameUI is null..")); return;
-//
-//	TArray<APlayerState*> Players = GS->PlayerArray;
-//	if (!Players.IsValidIndex(TargetPlayerIndex))
-//	{
-//		UE_LOG(LogTemp, Log, TEXT("TargetPlayerIndex is Not ValidIndex.."));
-//		return;
-//	}
-//
-//	ABRPlayerState* MyState = Cast<ABRPlayerState>(PlayerState);
-//	ABRPlayerState* TargetState = Cast<ABRPlayerState>(Players[TargetPlayerIndex]);
-//	ABRPlayerState* OpponentState = nullptr;
-//	for (APlayerState* PS : Players)
-//	{
-//		if (PS != MyState) OpponentState = Cast<ABRPlayerState>(PS);
-//	}
-//
-//	UE_LOG(LogTemp, Log, TEXT("TargetPlayer is %s"), *TargetState->GetPlayerName());
-//
-//	// 내가 타겟일 때
-//	if (MyState == TargetState)
-//	{
-//		if (FiredAmmo == EAmmoType::Live)
-//		{
-//			MyState->Hp--;
-//			OnUpdateHp();
-//			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *MyState->GetPlayerName());
-//
-//			// 체력이 0이하라면
-//			if(MyState->Hp <= 0)
-//			{
-//				// 해당 라운드 종료 (I Lose)
-//				// InGameUI->ShoResult(false) 패배 UI 처리
-//				GM->OnRoundEnd();
-//				return;
-//			}
-//			
-//			// 턴 전환 (상대 턴)
-//			if (IsLocalController())
-//			{
-//				GM->NextTurn();
-//			}
-//		}
-//		else if (FiredAmmo == EAmmoType::Blank)
-//		{
-//			// 내 턴 유지
-//		}
-//	}
-//
-//	// 상대가 타겟일 때
-//	else if (OpponentState == TargetState)
-//	{
-//		if (FiredAmmo == EAmmoType::Live)
-//		{
-//			OpponentState->Hp--;
-//			OnUpdateHp();
-//			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *OpponentState->GetPlayerName());
-//
-//			if(OpponentState->Hp <= 0)
-//			{
-//				// 해당 라운드 종료 (I Win)
-//				// InGameUI->ShoResult(true) 승리 UI 처리
-//				GM->OnRoundEnd();
-//				return;
-//			}
-//			
-//			// 턴 전환 (내 턴)
-//			if (IsLocalController())
-//			{
-//				GM->NextTurn();
-//			}
-//		}
-//		else if (FiredAmmo == EAmmoType::Blank)
-//		{
-//			GM->NextTurn();
-//		}
-//	}
-//
-//}
+	// 마지막 총알일 때 해당 라운드 종료
+	if (bIsLastAmmo && HasAuthority())
+	{
+		GM->OnRoundEnd();
+		bIsLastAmmo = false;
+	}
+}

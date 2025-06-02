@@ -103,6 +103,17 @@ void ABRGameMode::StartGame()
 
 	CurrentMatchIdx = 0;
 	CurrentRoundIdx = 0;
+
+	// PlayerState HP Replicated 변수 초기화
+	for (APlayerState* PS : GameState->PlayerArray)
+	{
+		if (ABRPlayerState* BPS = Cast<ABRPlayerState>(PS))
+		{
+			BPS->Hp = AllMatches[CurrentMatchIdx].PlayerHP;
+			BPS->OnRep_Hp(); // 서버의 UI도 업데이트해주기 위해 직접 호출
+		}
+	}
+
 	SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
 }
 
@@ -118,7 +129,7 @@ void ABRGameMode::NextTurn()
 	}
 	else
 	{
-		GS->SetTurnPlayer(Players[1]);
+		GS->SetTurnPlayer(Players[0]);
 	}
 
 	// 3인 이상 시
@@ -130,11 +141,13 @@ void ABRGameMode::NextTurn()
 void ABRGameMode::OnRoundEnd()
 {
 	++CurrentRoundIdx;
-	// 해당 매치의 라운드가 끝나지 않았으면 (+ 플레이어 HP도 확인해야 함)
+	// 해당 매치의 라운드가 끝나지 않았으면 (+ 플레이어 HP 확인해야 함)
+
 	if (AllMatches[CurrentMatchIdx].Rounds.IsValidIndex(CurrentRoundIdx))
 	{
 		SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
 		// 라운드별 초기화
+		UE_LOG(LogTemp, Log, TEXT("Start Next Round_%d"), CurrentRoundIdx);
 	}
 	// 이전 매치의 라운드가 끝나면 새로운 매치로 갱신
 	else
@@ -145,10 +158,12 @@ void ABRGameMode::OnRoundEnd()
 		{
 			SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
 			// 새 매치별 초기화
+			UE_LOG(LogTemp, Log, TEXT("Start New Match_%d"), CurrentMatchIdx);
 		}
 		else
 		{
 			// 게임 전체 종료
+			UE_LOG(LogTemp, Log, TEXT("It's over..."));
 		}
 	}
 }
@@ -212,16 +227,6 @@ void ABRGameMode::SetupAmmoForRound(int32 MatchIdx, int32 RoundIdx)
 	{
 		int SwapIdx = FMath::RandRange(0, NewAmmo.Num()-1);
 		NewAmmo.Swap(i, SwapIdx);
-	}
-
-	// PlayerState HP Replicated 변수 초기화
-	for (APlayerState* PS : GameState->PlayerArray)
-	{
-		if (ABRPlayerState* BPS = Cast<ABRPlayerState>(PS))
-		{
-			BPS->Hp = AllMatches[MatchIdx].PlayerHP;
-			BPS->OnRep_Hp(); // 서버의 UI도 업데이트해주기 위해 직접 호출
-		}
 	}
 	
 	// GameState Replicated 변수 초기화
