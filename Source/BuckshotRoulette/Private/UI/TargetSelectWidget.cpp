@@ -3,6 +3,7 @@
 
 #include "UI/TargetSelectWidget.h"
 #include "Components/Button.h"
+#include "Player/BRPlayerController.h"
 
 void UTargetSelectWidget::NativeConstruct()
 {
@@ -12,10 +13,22 @@ void UTargetSelectWidget::NativeConstruct()
 
 void UTargetSelectWidget::OnSelfClicked()
 {
-    OnTargetSelected.Broadcast(0); // 0: 자신
+    ABRPlayerController* PC = Cast<ABRPlayerController>(GetOwningPlayer());
+    
+    int32 TargetIdx = -1;
+    if (PC->HasAuthority()) TargetIdx = 0; // 서버면 Self는 (0)
+    else TargetIdx = 1;                    // 클라면 Self는 (1)
+
+	OnTargetSelected.Broadcast(TargetIdx);
 }
 
 void UTargetSelectWidget::OnOpponentClicked()
 {
-    OnTargetSelected.Broadcast(1); // 1: 상대
+    ABRPlayerController* PC = Cast<ABRPlayerController>(GetOwningPlayer());
+
+    int32 TargetIdx = -1;
+    if (PC->HasAuthority()) TargetIdx = 1; // 서버면 Opponent는 (1)
+    else TargetIdx = 0;                    // 클라면 Opponent는 (0)
+
+    OnTargetSelected.Broadcast(TargetIdx);
 }

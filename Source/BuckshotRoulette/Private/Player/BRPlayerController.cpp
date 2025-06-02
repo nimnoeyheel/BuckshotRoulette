@@ -159,39 +159,50 @@ void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
 	ServerRPC_RequestFire(TargetPlayerIndex);
 }
 
+void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlayerIndex)
+{
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS) return;
+
+	// 총알 소진 체크
+	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Ammo is empty.."));
+		return;
+	}
+
+	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
+	GS->CurrentAmmoIndex++;
+
+	if (FiredAmmo == EAmmoType::Live)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Live"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Blank"));
+	}
+
+	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
+	//Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
+
+	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출해보자.
+	GS->Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
+}
+
 void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
 {
 	// 타겟 플레이어의 HP 감소 / 턴 전환 / 승패
 	// 사망, UI 이펙트, 사운드, 카메라 셰이크 등
-
-	UE_LOG(LogTemp, Log, TEXT("%s Called OnFireResult"), *PlayerState->GetPlayerName());
-
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-	// GameMode null 이다!!!!
 	if (!GS || !GM || !InGameUI) return;
 
-	if (!GS) UE_LOG(LogTemp, Log, TEXT("GS is null..")); return;
-	if (!GM) UE_LOG(LogTemp, Log, TEXT("GM is null..")); return;
-	if (!InGameUI) UE_LOG(LogTemp, Log, TEXT("InGameUI is null..")); return;
-
 	TArray<APlayerState*> Players = GS->PlayerArray;
-	if (!Players.IsValidIndex(TargetPlayerIndex))
-	{
-		UE_LOG(LogTemp, Log, TEXT("TargetPlayerIndex is Not ValidIndex.."));
-		return;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("TargetPlayerIndex is %d"), TargetPlayerIndex);
-	}
+	if (!Players.IsValidIndex(TargetPlayerIndex)) return;
 
 	ABRPlayerState* MyState = Cast<ABRPlayerState>(PlayerState);
 	ABRPlayerState* TargetState = Cast<ABRPlayerState>(Players[TargetPlayerIndex]);
-	
-	if (!MyState) UE_LOG(LogTemp, Log, TEXT("MyState is null..")); return;
-	if(!TargetState) UE_LOG(LogTemp, Log, TEXT("TargetState is null..")); return;
-
 	ABRPlayerState* OpponentState = nullptr;
 	for (APlayerState* PS : Players)
 	{
@@ -258,37 +269,6 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			GM->NextTurn();
 		}
 	}
-}
-
-void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlayerIndex)
-{
-	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-	if (!GS) return;
-
-	// 총알 소진 체크
-	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
-	{
-		UE_LOG(LogTemp, Log, TEXT("Ammo is empty.."));
-		return;
-	}
-
-	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
-	GS->CurrentAmmoIndex++;
-
-	if (FiredAmmo == EAmmoType::Live)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Live"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Blank"));
-	}
-
-	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
-	//Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
-
-	// 그래서 GameState(또는 GameMode)에서 모든 PC를 순회하면서 함수를 직접 호출해보자.
-	GS->Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
 }
 
 //void ABRPlayerController::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
