@@ -53,4 +53,5 @@ void ABRPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABRPlayerState, PlayerIndex);
 	DOREPLIFETIME(ABRPlayerState, Hp);
+	DOREPLIFETIME(ABRPlayerState, MatchWinCount);
 }

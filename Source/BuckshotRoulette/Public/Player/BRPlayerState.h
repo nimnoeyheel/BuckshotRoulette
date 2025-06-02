@@ -29,12 +29,16 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	bool bNicknameEntered = false;
 
-	// 플레이어 HP
+// 플레이어 HP
 	UFUNCTION()
 	void OnRep_Hp();
 
 	UPROPERTY(ReplicatedUsing = OnRep_Hp)
     int32 Hp = 0;
+
+// 승수
+	UPROPERTY(Replicated)
+	int32 MatchWinCount = 0;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

@@ -131,40 +131,83 @@ void ABRGameMode::NextTurn()
 	{
 		GS->SetTurnPlayer(Players[0]);
 	}
-
-	// 3인 이상 시
-	//int CurrentIdx = GameState->PlayerArray.IndexOfByKey(GS->TurnPlayer);
-	//int NextIdx = (CurrentIdx + 1) % GameState->PlayerArray.Num();
-	//GS->SetTurnPlayer(GameState->PlayerArray[NextIdx]);
 }
 
 void ABRGameMode::OnRoundEnd()
 {
-	++CurrentRoundIdx;
-	// 해당 매치의 라운드가 끝나지 않았으면 (+ 플레이어 HP 확인해야 함)
+	UE_LOG(LogTemp, Log, TEXT("ABRGameMode::OnRoundEnd()"));
 
-	if (AllMatches[CurrentMatchIdx].Rounds.IsValidIndex(CurrentRoundIdx))
+// 1. 플레이어들 HP 상태 체크
+	// HP가 0인 플레이어 찾기
+	TArray<ABRPlayerState*> BRPlayers;
+	for (APlayerState* PS : GameState->PlayerArray)
 	{
-		SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
-		// 라운드별 초기화
-		UE_LOG(LogTemp, Log, TEXT("Start Next Round_%d"), CurrentRoundIdx);
+		if (ABRPlayerState* BPS = Cast<ABRPlayerState>(PS)) BRPlayers.Add(BPS);
 	}
-	// 이전 매치의 라운드가 끝나면 새로운 매치로 갱신
-	else
+
+	ABRPlayerState* Winner = nullptr;
+	ABRPlayerState* Loser = nullptr;
+	if (BRPlayers.Num() == 2)
 	{
+		// 클라(1)의 체력이 0이라면 서버(0) 승
+		if (BRPlayers[0]->Hp > 0 && BRPlayers[1]->Hp <= 0)
+		{
+			Winner = BRPlayers[0];
+			Loser = BRPlayers[1];
+		}
+
+		// 서버(0)의 체력이 0이라면 클라(1) 승
+		if (BRPlayers[1]->Hp > 0 && BRPlayers[0]->Hp <= 0)
+		{
+			Winner = BRPlayers[1];
+			Loser = BRPlayers[0];
+		}
+	}
+
+// 2. 만약 죽은 플레이어가 있다면 매치 종료/승수 관리
+	if (Winner)
+	{
+		Winner->MatchWinCount++;
+		UE_LOG(LogTemp, Log, TEXT("Player %s wins this match! [Total Wins: %d]"), *Winner->GetPlayerName(), Winner->MatchWinCount);
+
+		// 최종 승리자 : 2선승에 도달하면 전체 게임 종료
+		if (Winner->MatchWinCount >= 2)
+		{
+			// 최종 승리 연출, 게임 종료, UI 등
+			// Winner->GetPlayerName()이 승리
+			// 최종 게임 오버 처리
+			UE_LOG(LogTemp, Log, TEXT("%s wins Game! [Total Wins: %d]"), *Winner->GetPlayerName(), Winner->MatchWinCount);
+			return;
+		}
+
+		// 최종 승리자가 없다면 다음 매치로
 		++CurrentMatchIdx;
 		CurrentRoundIdx = 0;
 		if (AllMatches.IsValidIndex(CurrentMatchIdx))
 		{
+			// 새 매치 HP/턴 리셋
+			int32 StartHp = AllMatches[CurrentMatchIdx].PlayerHP;
+			for (APlayerState* PS : GameState->PlayerArray)
+			{
+				if (ABRPlayerState* BPS = Cast<ABRPlayerState>(PS))
+				{
+					BPS->Hp = StartHp;
+					BPS->OnRep_Hp();
+				}
+			}
 			SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
-			// 새 매치별 초기화
-			UE_LOG(LogTemp, Log, TEXT("Start New Match_%d"), CurrentMatchIdx);
+			UE_LOG(LogTemp, Log, TEXT("Start New Match_%d"), CurrentMatchIdx + 1);
 		}
-		else
-		{
-			// 게임 전체 종료
-			UE_LOG(LogTemp, Log, TEXT("It's over..."));
-		}
+		return;
+	}
+
+// 3. 둘 다 살아있다면 다음 라운드로
+	++CurrentRoundIdx;
+	if (AllMatches[CurrentMatchIdx].Rounds.IsValidIndex(CurrentRoundIdx))
+	{
+		SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
+		// 라운드별 초기화
+		UE_LOG(LogTemp, Log, TEXT("Start Next Round_%d"), CurrentRoundIdx + 1);
 	}
 }
 

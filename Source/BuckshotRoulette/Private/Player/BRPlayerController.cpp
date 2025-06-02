@@ -149,12 +149,6 @@ void ABRPlayerController::OnUpdateHp()
 
 void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
 {
-	// 해당 로직은 입력 제어를 추가했기 때문에 Fire 함수가 호출될 일이 없으므로 주석 처리
-	// 내 턴이 아니면 리턴
-	//ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-	//if(!GS) return;
-	//if(GS->TurnPlayer != PlayerState) return;
-
 	// 서버에 RPC로 명령 전달
 	ServerRPC_RequestFire(TargetPlayerIndex);
 }
@@ -165,7 +159,14 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	if (!GS) return;
 
 	// 총알 소진 체크
-	bIsLastAmmo = (GS->CurrentAmmoIndex + 1 >= GS->AmmoSequence.Num());
+	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Ammo is empty.."));
+		return;
+	}
+	bool bIsLastAmmo = (GS->CurrentAmmoIndex == GS->AmmoSequence.Num() - 1);
+
+	UE_LOG(LogTemp, Log, TEXT("bIsLastAmmo = %s"), bIsLastAmmo ? TEXT("true") : TEXT("false"));
 
 	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
 	GS->CurrentAmmoIndex++;
@@ -183,11 +184,13 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	//Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
 
 	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출해보자.
-	GS->Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
+	GS->Multicast_FireResult(TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
 }
 
-void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo)
+void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
 {
+	bool bRoundOver = false;
+
 	// 타겟 플레이어의 HP 감소 / 턴 전환 / 승패
 	// 사망, UI 이펙트, 사운드, 카메라 셰이크 등
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
@@ -221,16 +224,13 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			{
 				// 해당 라운드 종료 (I Lose)
 				// InGameUI->ShoResult(false) 패배 UI 처리
-
-				if (HasAuthority())
-				{
-					GM->OnRoundEnd();
-					return;
-				}
+				
+				bRoundOver = true;
 			}
-
-			// 턴 전환
-			if (HasAuthority()) GM->NextTurn();
+			else if (HasAuthority())
+			{
+				GM->NextTurn();
+			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
 		{
@@ -241,10 +241,10 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 				UE_LOG(LogTemp, Log, TEXT("%s 턴 유지"), *MyState->GetPlayerName());
 			}
 			// 상대가 나를 쐈다면
-			else
+			else if (HasAuthority())
 			{
 				// 턴 전환
-				if (HasAuthority()) GM->NextTurn();
+				GM->NextTurn();
 			}
 		}
 	}
@@ -256,22 +256,19 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 		{
 			OpponentState->Hp--;
 			OnUpdateHp();
-			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *OpponentState->GetPlayerName());
+			UE_LOG(LogTemp, Log, TEXT("%s Damage -1"), *OpponentState->GetPlayerName());
 
 			if (OpponentState->Hp <= 0)
 			{
 				// 해당 라운드 종료 (I Win)
 				// InGameUI->ShoResult(true) 승리 UI 처리
 
-				if (HasAuthority())
-				{
-					GM->OnRoundEnd();
-					return;
-				}
+				bRoundOver = true;
 			}
-
-			// 턴 전환
-			if (HasAuthority()) GM->NextTurn();
+			else if (HasAuthority())
+			{
+				GM->NextTurn();
+			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
 		{
@@ -290,9 +287,11 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 	}
 
 	// 마지막 총알일 때 해당 라운드 종료
-	if (bIsLastAmmo && HasAuthority())
+	if ((bIsLastAmmo || bRoundOver) && HasAuthority())
 	{
-		GM->OnRoundEnd();
 		bIsLastAmmo = false;
+		UE_LOG(LogTemp, Log, TEXT("This Round is Last!"));
+		GM->OnRoundEnd();
+		return;
 	}
 }

@@ -47,10 +47,7 @@ public:
 	void ServerRPC_RequestFire(int32 TargetPlayerIndex);
 
 	UFUNCTION()
-	void OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo);
-
-	UPROPERTY()
-	bool bIsLastAmmo = false;
+	void OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
