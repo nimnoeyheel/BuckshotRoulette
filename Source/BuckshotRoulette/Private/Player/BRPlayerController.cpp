@@ -3,15 +3,22 @@
 
 #include "Player/BRPlayerController.h"
 #include "Player/BRPlayerState.h"
+#include "UI/MainWidget.h"
+#include "UI/InGameWidget.h"
 #include "UI/NicknameEntryWidget.h"
 #include "Game/BRGameState.h"
 #include "Game/BRGameMode.h"
-#include "UI/InGameWidget.h"
 #include "Types/AmmoType.h"
 #include "GameFramework/PlayerState.h"
 
 ABRPlayerController::ABRPlayerController()
 {
+	static ConstructorHelpers::FClassFinder<UMainWidget> MainUIRef(TEXT("/Game/BuckShotRoulette/UI/WBP_Main.WBP_Main_C"));
+	if (MainUIRef.Succeeded())
+	{
+		MainWidgetClass = MainUIRef.Class;
+	}
+
 	static ConstructorHelpers::FClassFinder<UInGameWidget> InGameUIRef(TEXT("/Game/BuckShotRoulette/UI/WBP_InGame.WBP_InGame_C"));
 	if (InGameUIRef.Succeeded())
 	{
@@ -36,10 +43,10 @@ void ABRPlayerController::BeginPlay()
 		if (CurrentLevel == "LV_Test")
 		{
 			// 인게임 UI
-			if (InGameWidgetClass)
+			if (MainWidgetClass)
 			{
-				InGameUI = CreateWidget<UInGameWidget>(this, InGameWidgetClass);
-				if (InGameUI) InGameUI->AddToViewport();
+				MainUI = CreateWidget<UMainWidget>(this, MainWidgetClass);
+				if (MainUI) MainUI->AddToViewport();
 			}
 		}
 #pragma endregion

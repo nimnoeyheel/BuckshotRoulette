@@ -51,6 +51,12 @@ public:
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UMainWidget> MainWidgetClass;
+
+	UPROPERTY()
+	class UMainWidget* MainUI;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<class UInGameWidget> InGameWidgetClass;
 
 	UPROPERTY()
