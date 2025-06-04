@@ -41,7 +41,7 @@ void UInGameWidget::HideNicknameEntryWidget()
 
 void UInGameWidget::UpdateTurnNickname(const FString& Nickname)
 {
-    if (Txt_TurnPlayerName) Txt_TurnPlayerName->SetText(FText::FromString(Nickname));
+	if (Txt_TurnPlayerName) Txt_TurnPlayerName->SetText(FText::FromString(Nickname));
 	SetVisibleOverlay(Overlay_Turn, true);
 }
 

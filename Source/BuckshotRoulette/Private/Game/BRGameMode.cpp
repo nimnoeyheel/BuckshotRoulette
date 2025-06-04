@@ -71,7 +71,6 @@ void ABRGameMode::TryStartGameIfReady()
 			ReadyCount++;
 		}
 	}
-
 	// 2명 모두 닉네임 입력 완료 시 선공 플레이어 랜덤 결정
 	if(ReadyCount == 2) PickFirstPlayer();
 }
@@ -176,6 +175,7 @@ void ABRGameMode::OnRoundEnd()
 			// 최종 승리 연출, 게임 종료, UI 등
 			// Winner->GetPlayerName()이 승리
 			// 최종 게임 오버 처리
+			OnGameOver(Winner);
 			UE_LOG(LogTemp, Log, TEXT("%s wins Game! [Total Wins: %d]"), *Winner->GetPlayerName(), Winner->MatchWinCount);
 			return;
 		}
@@ -208,6 +208,25 @@ void ABRGameMode::OnRoundEnd()
 		SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
 		// 라운드별 초기화
 		UE_LOG(LogTemp, Log, TEXT("Start Next Round_%d"), CurrentRoundIdx + 1);
+	}
+}
+
+void ABRGameMode::OnGameOver(class ABRPlayerState* Winner)
+{
+	for (APlayerState* PS : GameState->PlayerArray)
+	{
+		if (ABRPlayerController* PC = Cast<ABRPlayerController>(PS->GetOwner()))
+		{
+			bool bIsWinner = (PS == Winner);
+			
+			UE_LOG(LogTemp, Log, TEXT("PS : %s"), *PS->GetPlayerName());
+			UE_LOG(LogTemp, Log, TEXT("Winner : %s"), *Winner->GetPlayerName());
+
+			//PC->OnGameOver(Winner->GetPlayerName(), bIsWinner);
+
+			ABRGameState* GS = Cast<ABRGameState>(GameState);
+			if (GS) GS->Multicast_OnGameOver(Winner/*, bIsWinner*/);
+		}
 	}
 }
 

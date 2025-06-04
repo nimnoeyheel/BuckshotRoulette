@@ -48,10 +48,20 @@ void ABRPlayerState::OnRep_Hp()
 	}
 }
 
+void ABRPlayerState::OnRep_TotalCash()
+{
+
+}
+
 void ABRPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABRPlayerState, PlayerIndex);
 	DOREPLIFETIME(ABRPlayerState, Hp);
 	DOREPLIFETIME(ABRPlayerState, MatchWinCount);
+	DOREPLIFETIME(ABRPlayerState, ShotsFired);
+	DOREPLIFETIME(ABRPlayerState, ShellsEjected);
+	DOREPLIFETIME(ABRPlayerState, CigarettesSmoked);
+	DOREPLIFETIME(ABRPlayerState, MLOfBeerDrank);
+	DOREPLIFETIME(ABRPlayerState, TotalCash);
 }

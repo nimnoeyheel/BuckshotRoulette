@@ -4,6 +4,7 @@
 #include "Actor/Shotgun.h"
 #include "Components/BoxComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "UI/MainWidget.h"
 #include "Player/BRPlayerController.h"
 #include "UI/InGameWidget.h"
 
@@ -56,24 +57,24 @@ void AShotgun::Tick(float DeltaTime)
 void AShotgun::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 {
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
-	if (!PC || !PC->InGameUI || !PC->IsMyTurn()) return;
-
-	PC->InGameUI->ShowFireRuleSubtitle();
+	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
+	
+	PC->MainUI->InGameUI->ShowFireRuleSubtitle();
 }
 
 void AShotgun::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 {
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
-	if (!PC || !PC->InGameUI || !PC->IsMyTurn()) return;
+	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 
-	PC->InGameUI->SetVisibleSubtitle(false);
+	PC->MainUI->InGameUI->SetVisibleSubtitle(false);
 }
 
 void AShotgun::OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
 	// 타겟 선택 UI 열기 (자신/상대)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
-	if (!PC || !PC->InGameUI || !PC->IsMyTurn()) return;
+	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 
-	PC->InGameUI->ShowTargetSelectUI();
+	PC->MainUI->InGameUI->ShowTargetSelectUI();
 }

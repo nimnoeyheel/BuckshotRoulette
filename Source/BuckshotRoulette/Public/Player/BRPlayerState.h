@@ -40,5 +40,24 @@ public:
 	UPROPERTY(Replicated)
 	int32 MatchWinCount = 0;
 
+// WinnerData : 위너 UI만 반영
+	UFUNCTION()
+	void OnRep_TotalCash();
+
+	UPROPERTY(Replicated)
+	int32 ShotsFired = 0;
+
+	UPROPERTY(Replicated)
+	int32 ShellsEjected = 0;
+
+	UPROPERTY(Replicated)
+	int32 CigarettesSmoked = 0;
+
+	UPROPERTY(Replicated)
+	int32 MLOfBeerDrank = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_TotalCash)
+	int32 TotalCash = 0;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

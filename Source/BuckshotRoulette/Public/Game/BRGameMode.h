@@ -47,7 +47,7 @@ protected:
 
 public:
 
-#pragma region 턴 시스템
+#pragma region 턴&게임 시스템
 	// 모든 플레이어가 닉네임 입력을 완료했는지 체크하는 함수
 	void TryStartGameIfReady();
 
@@ -60,6 +60,9 @@ public:
 
 	// 라운드 종료
 	void OnRoundEnd();
+	
+	// 게임 종료
+	void OnGameOver(class ABRPlayerState* Winner);
 #pragma endregion
 
 #pragma region 총알 시스템

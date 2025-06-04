@@ -10,6 +10,7 @@
 #include "Game/BRGameMode.h"
 #include "Types/AmmoType.h"
 #include "GameFramework/PlayerState.h"
+#include "UI/GameResultWidget.h"
 
 ABRPlayerController::ABRPlayerController()
 {
@@ -19,11 +20,11 @@ ABRPlayerController::ABRPlayerController()
 		MainWidgetClass = MainUIRef.Class;
 	}
 
-	static ConstructorHelpers::FClassFinder<UInGameWidget> InGameUIRef(TEXT("/Game/BuckShotRoulette/UI/WBP_InGame.WBP_InGame_C"));
+	/*static ConstructorHelpers::FClassFinder<UInGameWidget> InGameUIRef(TEXT("/Game/BuckShotRoulette/UI/WBP_InGame.WBP_InGame_C"));
 	if (InGameUIRef.Succeeded())
 	{
 		InGameWidgetClass = InGameUIRef.Class;
-	}
+	}*/
 }
 
 void ABRPlayerController::BeginPlay()
@@ -36,19 +37,38 @@ void ABRPlayerController::BeginPlay()
 		FString ROLE = HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT");
 		UE_LOG(LogTemp, Log, TEXT("This is %s"), *ROLE);
 
-#pragma region UI
-		// 레벨에 따라 UI 지정
-		FString CurrentLevel = GetWorld()->GetMapName();
-		CurrentLevel.RemoveFromStart(GetWorld()->StreamingLevelsPrefix); // 레벨 이름 앞에 접두사 _ 제거
-		if (CurrentLevel == "LV_Test")
+		if (MainWidgetClass)
 		{
-			// 인게임 UI
-			if (MainWidgetClass)
+			MainUI = CreateWidget<UMainWidget>(this, MainWidgetClass);
+			if (MainUI)
 			{
-				MainUI = CreateWidget<UMainWidget>(this, MainWidgetClass);
-				if (MainUI) MainUI->AddToViewport();
+				MainUI->AddToViewport();
+				MainUI->ShowInGame();
 			}
 		}
+
+		/*if (InGameWidgetClass)
+		{
+			InGameUI = CreateWidget<UInGameWidget>(this, InGameWidgetClass);
+		}*/
+
+#pragma region UI
+		//// 레벨에 따라 UI 지정
+		//FString CurrentLevel = GetWorld()->GetMapName();
+		//CurrentLevel.RemoveFromStart(GetWorld()->StreamingLevelsPrefix); // 레벨 이름 앞에 접두사 _ 제거
+		//if (CurrentLevel == "LV_Test")
+		//{
+		//	// 인게임 UI
+		//	if (MainWidgetClass)
+		//	{
+		//		MainUI = CreateWidget<UMainWidget>(this, MainWidgetClass);
+		//		if (MainUI)
+		//		{
+		//			MainUI->AddToViewport();
+		//			MainUI->ShowInGame();
+		//		}
+		//	}
+		//}
 #pragma endregion
 	}
 
@@ -108,11 +128,11 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	if (!GS) return;
 
 	ABRPlayerState* TurnPlayerState = Cast<ABRPlayerState>(GS->TurnPlayer);
-	if (!TurnPlayerState || !InGameUI) return;
+	if (!TurnPlayerState || !MainUI || !MainUI->InGameUI) return;
 
 	// UI에 턴 플레이어 닉네임 업데이트
 	FString Nick = TurnPlayerState->GetPlayerName();
-	InGameUI->UpdateTurnNickname(Nick);
+	MainUI->InGameUI->UpdateTurnNickname(Nick);
 
 	// 내 턴인지 확인 후 입력 제어
 	SetInputEnable(TurnPlayerState == PlayerState);
@@ -121,20 +141,20 @@ void ABRPlayerController::OnTurnPlayerChanged()
 void ABRPlayerController::OnUpdateNewRound()
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-	if (!GS || !InGameUI) return;
+	if (!GS || !MainUI || !MainUI->InGameUI) return;
 
 	// PlayerState에서 닉네임 가져오기 (자기 기준으로)
 	TArray<APlayerState*> Players = GS->PlayerArray;
 	FString Player1Nick = Players[0]->GetPlayerName();
 	FString Player2Nick = Players[1]->GetPlayerName();
 
-	InGameUI->UpdateNewRound(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->NumLive, GS->NumBlank);
+	MainUI->InGameUI->UpdateNewRound(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->NumLive, GS->NumBlank);
 }
 
 void ABRPlayerController::OnUpdateHp()
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-	if (!GS || !InGameUI) return;
+	if (!GS || !MainUI || !MainUI->InGameUI) return;
 
 	TArray<APlayerState*> Players = GS->PlayerArray;
 
@@ -151,7 +171,7 @@ void ABRPlayerController::OnUpdateHp()
 	UE_LOG(LogTemp, Log, TEXT("%s HP : %d"), *Players[1]->GetPlayerName(), Player2Hp);
 
 	// 모든 플레이어의 HP UI 업데이트
-	InGameUI->UpdatePlayerHp(Player1Hp, Player2Hp);
+	MainUI->InGameUI->UpdatePlayerHp(Player1Hp, Player2Hp);
 }
 
 void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
@@ -163,7 +183,8 @@ void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
 void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlayerIndex)
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-	if (!GS) return;
+	ABRPlayerState* PS = Cast<ABRPlayerState>(PlayerState);
+	if (!GS || !PS) return;
 
 	// 총알 소진 체크
 	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
@@ -172,7 +193,6 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 		return;
 	}
 	bool bIsLastAmmo = (GS->CurrentAmmoIndex == GS->AmmoSequence.Num() - 1);
-
 	UE_LOG(LogTemp, Log, TEXT("bIsLastAmmo = %s"), bIsLastAmmo ? TEXT("true") : TEXT("false"));
 
 	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
@@ -187,10 +207,15 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Blank"));
 	}
 
+	// Winner Result Data 증가
+	PS->ShotsFired++;
+	PS->ShellsEjected++;
+	PS->TotalCash += PS->ShotsFired + PS->ShellsEjected;
+
 	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
 	//Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
 
-	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출해보자.
+	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출
 	GS->Multicast_FireResult(TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
 }
 
@@ -202,7 +227,7 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 	// 사망, UI 이펙트, 사운드, 카메라 셰이크 등
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-	if (!GS || !GM || !InGameUI) return;
+	if (!GS || !GM || !MainUI || !MainUI->InGameUI) return;
 
 	TArray<APlayerState*> Players = GS->PlayerArray;
 	if (!Players.IsValidIndex(TargetPlayerIndex)) return;
@@ -301,4 +326,29 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 		GM->OnRoundEnd();
 		return;
 	}
+}
+
+void ABRPlayerController::OnGameOver(ABRPlayerState* Winner)
+{
+	ABRPlayerState* PS = Cast<ABRPlayerState>(PlayerState);
+	if (!PS || !MainUI || !MainUI->ResultUI) return;
+
+	bool bIsWinner = (PS == Winner);
+
+	if (bIsWinner)
+	{
+		MainUI->ResultUI->SetWinnerInfo(
+			Winner->GetPlayerName(),
+			PS->ShotsFired,
+			PS->ShellsEjected,
+			PS->CigarettesSmoked,
+			PS->MLOfBeerDrank,
+			PS->TotalCash
+		);
+	}
+	else
+	{
+		MainUI->ResultUI->SetLoserNickname(PS->GetPlayerName());
+	}
+	MainUI->ShowResult(bIsWinner);
 }

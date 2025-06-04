@@ -4,7 +4,7 @@
 #include "Game/BRGameState.h"
 #include "Net/UnrealNetwork.h"
 #include "Player/BRPlayerController.h"
-#include "UI/InGameWidget.h"
+#include "GameFramework/Actor.h"
 
 void ABRGameState::SetTurnPlayer(APlayerState* NewTurnPlayer)
 {
@@ -37,6 +37,20 @@ void ABRGameState::OnRep_UpdateNewRound()
 		if (PC && PC->IsLocalController())
 		{
 			PC->OnUpdateNewRound();
+		}
+	}
+}
+
+void ABRGameState::Multicast_OnGameOver_Implementation(ABRPlayerState* Winner/*, bool bIsWinner*/)
+{
+	// 모든 PlayerController에 새로운 라운드 정보 업데이트 알림
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
+		if (PC && PC->IsLocalController())
+		{
+			//PC->OnGameOver(WinnerName, bIsWinner);
+			PC->OnGameOver(Winner);
 		}
 	}
 }

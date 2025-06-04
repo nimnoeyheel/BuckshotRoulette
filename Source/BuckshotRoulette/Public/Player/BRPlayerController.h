@@ -49,6 +49,11 @@ public:
 	UFUNCTION()
 	void OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
 
+// 게임 종료
+	UFUNCTION()
+	//void OnGameOver(const FString& WinnerName, bool bIsWinner);
+	void OnGameOver(class ABRPlayerState* Winner);
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<class UMainWidget> MainWidgetClass;
@@ -56,9 +61,9 @@ public:
 	UPROPERTY()
 	class UMainWidget* MainUI;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<class UInGameWidget> InGameWidgetClass;
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	//TSubclassOf<class UInGameWidget> InGameWidgetClass;
 
-	UPROPERTY()
-	class UInGameWidget* InGameUI;
+	//UPROPERTY()
+	//class UInGameWidget* InGameUI;
 };
