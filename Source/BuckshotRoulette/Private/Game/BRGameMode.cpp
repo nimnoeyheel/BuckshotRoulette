@@ -64,8 +64,7 @@ void ABRGameMode::TryStartGameIfReady()
 		APlayerController* PC = It->Get();
 		ABRPlayerState* PS = PC ? Cast<ABRPlayerState>(PC->PlayerState) : nullptr;
 
-		// 플레이어 닉네임이 비어있지 않으면 카운트
-		//if (PS && !PS->GetPlayerName().IsEmpty())
+		// 플레이어가 닉네임을 입력했으면
 		if(PS && PS->bNicknameEntered)
 		{
 			ReadyCount++;
@@ -172,8 +171,6 @@ void ABRGameMode::OnRoundEnd()
 		// 최종 승리자 : 2선승에 도달하면 전체 게임 종료
 		if (Winner->MatchWinCount >= 2)
 		{
-			// 최종 승리 연출, 게임 종료, UI 등
-			// Winner->GetPlayerName()이 승리
 			// 최종 게임 오버 처리
 			OnGameOver(Winner);
 			UE_LOG(LogTemp, Log, TEXT("%s wins Game! [Total Wins: %d]"), *Winner->GetPlayerName(), Winner->MatchWinCount);
@@ -222,10 +219,8 @@ void ABRGameMode::OnGameOver(class ABRPlayerState* Winner)
 			UE_LOG(LogTemp, Log, TEXT("PS : %s"), *PS->GetPlayerName());
 			UE_LOG(LogTemp, Log, TEXT("Winner : %s"), *Winner->GetPlayerName());
 
-			//PC->OnGameOver(Winner->GetPlayerName(), bIsWinner);
-
 			ABRGameState* GS = Cast<ABRGameState>(GameState);
-			if (GS) GS->Multicast_OnGameOver(Winner/*, bIsWinner*/);
+			if (GS) GS->Multicast_OnGameOver(Winner);
 		}
 	}
 }

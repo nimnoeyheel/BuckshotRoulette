@@ -19,12 +19,6 @@ ABRPlayerController::ABRPlayerController()
 	{
 		MainWidgetClass = MainUIRef.Class;
 	}
-
-	/*static ConstructorHelpers::FClassFinder<UInGameWidget> InGameUIRef(TEXT("/Game/BuckShotRoulette/UI/WBP_InGame.WBP_InGame_C"));
-	if (InGameUIRef.Succeeded())
-	{
-		InGameWidgetClass = InGameUIRef.Class;
-	}*/
 }
 
 void ABRPlayerController::BeginPlay()
@@ -46,11 +40,6 @@ void ABRPlayerController::BeginPlay()
 				MainUI->ShowInGame();
 			}
 		}
-
-		/*if (InGameWidgetClass)
-		{
-			InGameUI = CreateWidget<UInGameWidget>(this, InGameWidgetClass);
-		}*/
 
 #pragma region UI
 		//// 레벨에 따라 UI 지정
@@ -223,8 +212,6 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 {
 	bool bRoundOver = false;
 
-	// 타겟 플레이어의 HP 감소 / 턴 전환 / 승패
-	// 사망, UI 이펙트, 사운드, 카메라 셰이크 등
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
 	if (!GS || !GM || !MainUI || !MainUI->InGameUI) return;
@@ -254,9 +241,7 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			// 체력이 0이하라면
 			if (MyState->Hp <= 0)
 			{
-				// 해당 라운드 종료 (I Lose)
-				// InGameUI->ShoResult(false) 패배 UI 처리
-				
+				// 해당 라운드 종료
 				bRoundOver = true;
 			}
 			else if (HasAuthority())
@@ -292,9 +277,7 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 
 			if (OpponentState->Hp <= 0)
 			{
-				// 해당 라운드 종료 (I Win)
-				// InGameUI->ShoResult(true) 승리 UI 처리
-
+				// 해당 라운드 종료
 				bRoundOver = true;
 			}
 			else if (HasAuthority())

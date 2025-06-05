@@ -49,7 +49,6 @@ void ABRGameState::Multicast_OnGameOver_Implementation(ABRPlayerState* Winner/*,
 		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
 		if (PC && PC->IsLocalController())
 		{
-			//PC->OnGameOver(WinnerName, bIsWinner);
 			PC->OnGameOver(Winner);
 		}
 	}

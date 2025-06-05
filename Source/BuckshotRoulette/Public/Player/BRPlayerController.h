@@ -51,7 +51,6 @@ public:
 
 // 게임 종료
 	UFUNCTION()
-	//void OnGameOver(const FString& WinnerName, bool bIsWinner);
 	void OnGameOver(class ABRPlayerState* Winner);
 
 public:
@@ -60,10 +59,4 @@ public:
 
 	UPROPERTY()
 	class UMainWidget* MainUI;
-
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	//TSubclassOf<class UInGameWidget> InGameWidgetClass;
-
-	//UPROPERTY()
-	//class UInGameWidget* InGameUI;
 };
