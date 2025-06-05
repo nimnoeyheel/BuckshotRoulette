@@ -10,7 +10,7 @@ ABRCharacter::ABRCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshPath (TEXT("/Game/MANIACS/ManiacKiller/Mesh/Maniac4/SK_maniac_killer_4.SK_maniac_killer_4"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshPath(TEXT("/Game/MANIACS/ManiacKiller/Mesh/Maniac4/SK_maniac_killer_4.SK_maniac_killer_4"));
 	if (MeshPath.Object)
 	{
 		GetMesh()->SetSkeletalMesh(MeshPath.Object);
@@ -18,6 +18,11 @@ ABRCharacter::ABRCharacter()
 		GetMesh()->SetRelativeRotation(FRotator(0, -90, 0)); //(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)
 	}
 
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT("/Game/BuckShotRoulette/Blueprints/Character/ABP_Player.ABP_Player_C"));
+	if (AnimPath.Class)
+	{
+		GetMesh()->SetAnimInstanceClass(AnimPath.Class);
+	}
 }
 
 // Called when the game starts or when spawned

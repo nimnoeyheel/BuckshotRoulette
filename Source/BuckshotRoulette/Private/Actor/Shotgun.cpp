@@ -23,6 +23,12 @@ AShotgun::AShotgun()
 		ShotgunMesh->SetSkeletalMesh(ShotGunMeshAsset.Object);
 	}
 
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT("/Game/BuckShotRoulette/Blueprints/Shotgun/ABP_Shotgun.ABP_Shotgun_C"));
+	if (AnimPath.Class)
+	{
+		ShotgunMesh->SetAnimInstanceClass(AnimPath.Class);
+	}
+
 	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
 	OverlapBox->SetupAttachment(RootComponent);
 	OverlapBox->SetRelativeLocation(FVector(30, 0, 5)); // (X=30.000000,Y=0.000000,Z=5.000000)
