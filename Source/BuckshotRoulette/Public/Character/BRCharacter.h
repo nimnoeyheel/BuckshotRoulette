@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -25,5 +25,17 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+public:
+// 애니메이션
+	UFUNCTION(BlueprintCallable)
+	void TriggerAttackAnim();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bIsAttacking = false;
+
+// 카메라
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	class UCameraComponent* CameraComp;
 
 };

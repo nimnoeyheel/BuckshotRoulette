@@ -1,8 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Character/BRCharacter.h"
 #include "Player/BRPlayerState.h"
+#include "Camera/CameraComponent.h"
 
 // Sets default values
 ABRCharacter::ABRCharacter()
@@ -23,6 +24,11 @@ ABRCharacter::ABRCharacter()
 	{
 		GetMesh()->SetAnimInstanceClass(AnimPath.Class);
 	}
+
+	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	CameraComp->SetupAttachment(RootComponent);
+	CameraComp->SetRelativeLocation(FVector(30, 0, 40)); // (X=30.000000,Y=0.000000,Z=40.000000)
+	CameraComp->SetRelativeRotation(FRotator(-10, 0, 0)); // (Pitch=-10.000000,Yaw=0.000000,Roll=0.000000)
 }
 
 // Called when the game starts or when spawned
@@ -49,5 +55,19 @@ void ABRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void ABRCharacter::TriggerAttackAnim()
+{
+	bIsAttacking = true;
+
+	// 0.8초 뒤 (FireAnim Sec)
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			bIsAttacking = false;
+		}
+	), 0.8f, false);
 }
 
