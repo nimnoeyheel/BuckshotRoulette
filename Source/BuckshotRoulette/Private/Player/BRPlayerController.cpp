@@ -199,28 +199,31 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	PS->ShellsEjected++;
 	PS->TotalCash += PS->ShotsFired + PS->ShellsEjected;
 
+	// 공격 애니메이션
 	// FiringPlayerIndex 구하기
 	int32 FiringPlayerIndex = PS->PlayerIndex;
-	UE_LOG(LogTemp, Log, TEXT("FiringPlayer is %s. Idx(%d)"), *PS->GetPlayerName(), PS->PlayerIndex);
-
-	// 공격 애니메이션
 	if (PS->PlayerIndex == FiringPlayerIndex)
 	{
 		// 자기 자신에게 쏘면
 		bool bSelfAttack = (FiringPlayerIndex == TargetPlayerIndex + 1);
-		if (APawn* MyPawn = GetPawn())
+		if (bSelfAttack)
 		{
-			if (MyPawn)
+			// 총 애니메이션만 실행
+		}
+		else
+		{
+			if (APawn* MyPawn = GetPawn())
 			{
-				ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
-				if (MyChar) MyChar->Multicast_TriggerAttackAnim(bSelfAttack);
+				if (MyPawn)
+				{
+					ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
+					if (MyChar) MyChar->Multicast_TriggerAttackAnim();
+				}
 			}
 		}
 	}
 
 	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
-	//Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
-
 	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출
 	GS->Multicast_FireResult(TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
 }

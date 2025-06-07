@@ -4,6 +4,7 @@
 #include "Character/BRCharacter.h"
 #include "Player/BRPlayerState.h"
 #include "Camera/CameraComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ABRCharacter::ABRCharacter()
@@ -57,25 +58,67 @@ void ABRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
-void ABRCharacter::Multicast_TriggerAttackAnim_Implementation(bool bSelfAttack)
+void ABRCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	TriggerAttackAnim(bSelfAttack);
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ABRCharacter, PlayerAnimState);
 }
 
-void ABRCharacter::TriggerAttackAnim(bool bSelfAttack)
+void ABRCharacter::Multicast_TriggerAttackAnim_Implementation()
+{
+	TriggerAttackAnim();
+}
+
+void ABRCharacter::TriggerAttackAnim()
 {
 	bIsAttacking = true;
-	//bIsAttacking = !bSelfAttack;
-	bIsSelfAttacking = bSelfAttack;
+	PlayerAnimState = EPlayerAnimState::Attack;
 
-	// 0.8초 뒤 (FireAnim Sec)
+	// 2.57초 뒤 (FireAnim Sec)
 	FTimerHandle Handle;
 	GetWorld()->GetTimerManager().SetTimer(Handle,
 		FTimerDelegate::CreateLambda([&]()
 		{
 			bIsAttacking = false;
-			bIsSelfAttacking = false;
+			PlayerAnimState = EPlayerAnimState::Idle;
 		}
 	), 2.57f, false);
 }
 
+void ABRCharacter::Multicast_TriggerDamageAnim_Implementation()
+{
+	TriggerDamageAnim();
+}
+
+void ABRCharacter::TriggerDamageAnim()
+{
+	PlayerAnimState = EPlayerAnimState::Damage;
+
+	// (DamageAnim Sec)
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			PlayerAnimState = EPlayerAnimState::Idle;
+		}
+	), 2.55f, false);
+}
+
+void ABRCharacter::Multicast_TriggerDeathAnim_Implementation()
+{
+	TriggerDeathAnim();
+}
+
+void ABRCharacter::TriggerDeathAnim()
+{
+	PlayerAnimState = EPlayerAnimState::Death;
+
+	// 1.96초 뒤 (DeathAnim Sec)
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			PlayerAnimState = EPlayerAnimState::Idle;
+		}
+	), 1.96f, false);
+}

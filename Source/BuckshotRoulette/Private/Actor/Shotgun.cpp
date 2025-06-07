@@ -65,6 +65,9 @@ void AShotgun::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	
+	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
+	ShotgunMesh->SetRelativeLocation(Loc);
+
 	PC->MainUI->InGameUI->ShowFireRuleSubtitle();
 }
 
@@ -72,6 +75,9 @@ void AShotgun::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 {
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
+
+	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
+	ShotgunMesh->SetRelativeLocation(FVector(Loc));
 
 	PC->MainUI->InGameUI->SetVisibleSubtitle(false);
 }

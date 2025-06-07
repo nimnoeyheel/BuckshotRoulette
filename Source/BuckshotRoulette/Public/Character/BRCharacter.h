@@ -6,6 +6,15 @@
 #include "GameFramework/Character.h"
 #include "BRCharacter.generated.h"
 
+UENUM(BlueprintType)
+enum class EPlayerAnimState : uint8
+{
+	Idle      UMETA(DisplayName = "Idle"),
+	Attack    UMETA(DisplayName = "Attack"),
+	Damage    UMETA(DisplayName = "Damage"),
+	Death     UMETA(DisplayName = "Death")
+};
+
 UCLASS()
 class BUCKSHOTROULETTE_API ABRCharacter : public ACharacter
 {
@@ -26,19 +35,39 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 public:
 // 애니메이션
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_TriggerAttackAnim(bool bSelfAttack);
+	void Multicast_TriggerAttackAnim();
 
-	UFUNCTION(BlueprintCallable)
-	void TriggerAttackAnim(bool bSelfAttack);
+	UFUNCTION()
+	void TriggerAttackAnim();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TriggerDamageAnim();
+
+	UFUNCTION()
+	void TriggerDamageAnim();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TriggerDeathAnim();
+
+	UFUNCTION()
+	void TriggerDeathAnim();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category="Anim")
+	EPlayerAnimState PlayerAnimState = EPlayerAnimState::Idle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
 	bool bIsAttacking = false;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
-	bool bIsSelfAttacking = false;
+	bool bIsDamaged = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bIsDead = false;
 
 // 카메라
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
