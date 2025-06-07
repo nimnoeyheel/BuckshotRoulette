@@ -5,6 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Player/BRPlayerController.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/PlayerState.h"
 
 void ABRGameState::SetTurnPlayer(APlayerState* NewTurnPlayer)
 {

@@ -133,8 +133,6 @@ void ABRGameMode::NextTurn()
 
 void ABRGameMode::OnRoundEnd()
 {
-	UE_LOG(LogTemp, Log, TEXT("ABRGameMode::OnRoundEnd()"));
-
 // 1. 플레이어들 HP 상태 체크
 	// HP가 0인 플레이어 찾기
 	TArray<ABRPlayerState*> BRPlayers;

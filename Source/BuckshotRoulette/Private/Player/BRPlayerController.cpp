@@ -11,6 +11,7 @@
 #include "Types/AmmoType.h"
 #include "GameFramework/PlayerState.h"
 #include "UI/GameResultWidget.h"
+#include "Character/BRCharacter.h"
 
 ABRPlayerController::ABRPlayerController()
 {
@@ -156,9 +157,6 @@ void ABRPlayerController::OnUpdateHp()
 		if (BPS->PlayerIndex == 2) Player2Hp = BPS->Hp;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("%s HP : %d"), *Players[0]->GetPlayerName(), Player1Hp);
-	UE_LOG(LogTemp, Log, TEXT("%s HP : %d"), *Players[1]->GetPlayerName(), Player2Hp);
-
 	// 모든 플레이어의 HP UI 업데이트
 	MainUI->InGameUI->UpdatePlayerHp(Player1Hp, Player2Hp);
 }
@@ -201,6 +199,25 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	PS->ShellsEjected++;
 	PS->TotalCash += PS->ShotsFired + PS->ShellsEjected;
 
+	// FiringPlayerIndex 구하기
+	int32 FiringPlayerIndex = PS->PlayerIndex;
+	UE_LOG(LogTemp, Log, TEXT("FiringPlayer is %s. Idx(%d)"), *PS->GetPlayerName(), PS->PlayerIndex);
+
+	// 공격 애니메이션
+	if (PS->PlayerIndex == FiringPlayerIndex)
+	{
+		// 자기 자신에게 쏘면
+		bool bSelfAttack = (FiringPlayerIndex == TargetPlayerIndex + 1);
+		if (APawn* MyPawn = GetPawn())
+		{
+			if (MyPawn)
+			{
+				ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
+				if (MyChar) MyChar->Multicast_TriggerAttackAnim(bSelfAttack);
+			}
+		}
+	}
+
 	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
 	//Multicast_FireResult(TargetPlayerIndex, FiredAmmo);
 
@@ -210,11 +227,12 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 
 void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
 {
+	UE_LOG(LogTemp, Log, TEXT("ABRPlayerController::OnFireResult"));
+
 	bool bRoundOver = false;
 
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-	if (!GS || !GM || !MainUI || !MainUI->InGameUI) return;
+	if (!GS || !MainUI || !MainUI->InGameUI) return;
 
 	TArray<APlayerState*> Players = GS->PlayerArray;
 	if (!Players.IsValidIndex(TargetPlayerIndex)) return;
@@ -226,7 +244,6 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 	{
 		if (PS != MyState) OpponentState = Cast<ABRPlayerState>(PS);
 	}
-
 	UE_LOG(LogTemp, Log, TEXT("TargetPlayer is %s"), *TargetState->GetPlayerName());
 
 	// 내가 타겟일 때
@@ -246,7 +263,8 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			}
 			else if (HasAuthority())
 			{
-				GM->NextTurn();
+				ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+				if (GM) GM->NextTurn();
 			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
@@ -261,7 +279,8 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			else if (HasAuthority())
 			{
 				// 턴 전환
-				GM->NextTurn();
+				ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+				if (GM) GM->NextTurn();
 			}
 		}
 	}
@@ -282,7 +301,8 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			}
 			else if (HasAuthority())
 			{
-				GM->NextTurn();
+				ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+				if (GM) GM->NextTurn();
 			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
@@ -290,7 +310,11 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			// 내 턴에 상대를 쐈다면
 			if (MyState == GS->TurnPlayer)
 			{
-				if (HasAuthority()) GM->NextTurn();
+				if (HasAuthority())
+				{
+					ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+					if (GM) GM->NextTurn();
+				}
 			}
 			// 상대가 자기 자신을 쐈다면
 			else
@@ -306,8 +330,8 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 	{
 		bIsLastAmmo = false;
 		UE_LOG(LogTemp, Log, TEXT("This Round is Last!"));
-		GM->OnRoundEnd();
-		return;
+		ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+		if (GM) GM->OnRoundEnd();
 	}
 }
 

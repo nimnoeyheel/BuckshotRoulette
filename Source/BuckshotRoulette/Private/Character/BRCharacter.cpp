@@ -57,9 +57,16 @@ void ABRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
-void ABRCharacter::TriggerAttackAnim()
+void ABRCharacter::Multicast_TriggerAttackAnim_Implementation(bool bSelfAttack)
+{
+	TriggerAttackAnim(bSelfAttack);
+}
+
+void ABRCharacter::TriggerAttackAnim(bool bSelfAttack)
 {
 	bIsAttacking = true;
+	//bIsAttacking = !bSelfAttack;
+	bIsSelfAttacking = bSelfAttack;
 
 	// 0.8초 뒤 (FireAnim Sec)
 	FTimerHandle Handle;
@@ -67,7 +74,8 @@ void ABRCharacter::TriggerAttackAnim()
 		FTimerDelegate::CreateLambda([&]()
 		{
 			bIsAttacking = false;
+			bIsSelfAttacking = false;
 		}
-	), 0.8f, false);
+	), 2.57f, false);
 }
 

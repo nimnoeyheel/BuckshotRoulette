@@ -60,6 +60,6 @@ public:
 
 // 게임 종료 승패 UI Multicast
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_OnGameOver(class ABRPlayerState* Winner/*, bool bIsWinner*/);
+	void Multicast_OnGameOver(class ABRPlayerState* Winner);
 
 };

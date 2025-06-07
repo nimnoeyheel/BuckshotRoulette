@@ -28,11 +28,17 @@ public:
 
 public:
 // 애니메이션
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TriggerAttackAnim(bool bSelfAttack);
+
 	UFUNCTION(BlueprintCallable)
-	void TriggerAttackAnim();
+	void TriggerAttackAnim(bool bSelfAttack);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
 	bool bIsAttacking = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
+	bool bIsSelfAttacking = false;
 
 // 카메라
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
