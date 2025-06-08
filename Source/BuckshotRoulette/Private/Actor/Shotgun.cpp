@@ -66,7 +66,7 @@ void AShotgun::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	
 	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
-	ShotgunMesh->SetRelativeLocation(Loc);
+	ShotgunMesh->SetWorldLocation(Loc);
 
 	PC->MainUI->InGameUI->ShowFireRuleSubtitle();
 }
@@ -77,7 +77,7 @@ void AShotgun::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
-	ShotgunMesh->SetRelativeLocation(FVector(Loc));
+	ShotgunMesh->SetWorldLocation(Loc);
 
 	PC->MainUI->InGameUI->SetVisibleSubtitle(false);
 }

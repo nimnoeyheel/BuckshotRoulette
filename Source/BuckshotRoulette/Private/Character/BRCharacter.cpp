@@ -5,6 +5,8 @@
 #include "Player/BRPlayerState.h"
 #include "Camera/CameraComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Actor/Board.h"
+#include "EngineUtils.h"
 
 // Sets default values
 ABRCharacter::ABRCharacter()
@@ -28,8 +30,9 @@ ABRCharacter::ABRCharacter()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(RootComponent);
-	CameraComp->SetRelativeLocation(FVector(30, 0, 40)); // (X=30.000000,Y=0.000000,Z=40.000000)
-	CameraComp->SetRelativeRotation(FRotator(-10, 0, 0)); // (Pitch=-10.000000,Yaw=0.000000,Roll=0.000000)
+	CameraComp->SetRelativeLocation(FVector(30, 0, 58)); // (X=30.000000,Y=0.000000,Z=58.000000)
+	CameraComp->SetRelativeRotation(FRotator(-26, 0, 0)); // (Pitch=-26.000000,Yaw=0.000000,Roll=0.000000)
+
 }
 
 // Called when the game starts or when spawned
@@ -42,6 +45,12 @@ void ABRCharacter::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("PlayerName: %s"), *PS->GetPlayerName());
 	}
 
+	// 월드에 존재하는 ABoard 인스턴스를 찾기
+	for (TActorIterator<ABoard> It(GetWorld()); It; ++It)
+	{
+		BoardActor = *It;
+		break;
+	}
 }
 
 // Called every frame
@@ -64,30 +73,54 @@ void ABRCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ABRCharacter, PlayerAnimState);
 }
 
+void ABRCharacter::AttachWeaponToHand()
+{
+	if (BoardActor && BoardActor->GetShotgunActor())
+	{
+		BoardActor->GetShotgunActor()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		BoardActor->GetShotgunActor()->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "shotgun_Socket");
+	}
+}
+
+void ABRCharacter::AttachWeaponToBoard()
+{
+	if (BoardActor && BoardActor->GetShotgunActor())
+	{
+		BoardActor->GetShotgunActor()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		BoardActor->GetShotgunActor()->AttachToComponent(BoardActor->ShotgunChild, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	}
+}
+
 void ABRCharacter::Multicast_TriggerAttackAnim_Implementation()
 {
+	AttachWeaponToHand();
 	TriggerAttackAnim();
 }
 
 void ABRCharacter::TriggerAttackAnim()
 {
-	bIsAttacking = true;
 	PlayerAnimState = EPlayerAnimState::Attack;
 
-	// 2.57초 뒤 (FireAnim Sec)
+	// 2.5초 뒤 (FireAnim Sec)
 	FTimerHandle Handle;
 	GetWorld()->GetTimerManager().SetTimer(Handle,
 		FTimerDelegate::CreateLambda([&]()
 		{
-			bIsAttacking = false;
 			PlayerAnimState = EPlayerAnimState::Idle;
+			AttachWeaponToBoard();
 		}
-	), 2.57f, false);
+	), 2.5f, false);
 }
 
 void ABRCharacter::Multicast_TriggerDamageAnim_Implementation()
 {
-	TriggerDamageAnim();
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			TriggerDamageAnim();
+		}
+	), 3.f, false);
 }
 
 void ABRCharacter::TriggerDamageAnim()
@@ -101,12 +134,18 @@ void ABRCharacter::TriggerDamageAnim()
 		{
 			PlayerAnimState = EPlayerAnimState::Idle;
 		}
-	), 2.55f, false);
+	), 3.f, false);
 }
 
 void ABRCharacter::Multicast_TriggerDeathAnim_Implementation()
 {
-	TriggerDeathAnim();
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			TriggerDeathAnim();
+		}
+	), 2.55f, false);
 }
 
 void ABRCharacter::TriggerDeathAnim()

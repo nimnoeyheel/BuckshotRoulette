@@ -38,36 +38,31 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
+// 총 Attach
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
+	class ABoard* BoardActor = nullptr;
+
+	void AttachWeaponToHand();
+	void AttachWeaponToBoard();
+
 // 애니메이션
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_TriggerAttackAnim();
-
 	UFUNCTION()
 	void TriggerAttackAnim();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_TriggerDamageAnim();
-
 	UFUNCTION()
 	void TriggerDamageAnim();
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_TriggerDeathAnim();
-
 	UFUNCTION()
 	void TriggerDeathAnim();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category="Anim")
 	EPlayerAnimState PlayerAnimState = EPlayerAnimState::Idle;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
-	bool bIsAttacking = false;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
-	bool bIsDamaged = false;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim")
-	bool bIsDead = false;
 
 // 카메라
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")

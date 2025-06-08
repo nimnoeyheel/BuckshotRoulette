@@ -257,12 +257,32 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			MyState->Hp--;
 			OnUpdateHp();
 			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *MyState->GetPlayerName());
+			
+			// 피격 애니메이션
+			if (APawn* MyPawn = MyState->GetPawn())
+			{
+				if (MyPawn)
+				{
+					ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
+					if(MyChar) MyChar->Multicast_TriggerDamageAnim();
+				}
+			}
 
 			// 체력이 0이하라면
 			if (MyState->Hp <= 0)
 			{
 				// 해당 라운드 종료
 				bRoundOver = true;
+
+				// 사망 애니메이션
+				if (APawn* MyPawn = MyState->GetPawn())
+				{
+					if (MyPawn)
+					{
+						ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
+						if (MyChar) MyChar->Multicast_TriggerDeathAnim();
+					}
+				}
 			}
 			else if (HasAuthority())
 			{
@@ -297,10 +317,30 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			OnUpdateHp();
 			UE_LOG(LogTemp, Log, TEXT("%s Damage -1"), *OpponentState->GetPlayerName());
 
+			// 피격 애니메이션
+			if (APawn* OpponentPawn = OpponentState->GetPawn())
+			{
+				if (OpponentPawn)
+				{
+					ABRCharacter* OpponentChar = Cast<ABRCharacter>(OpponentPawn);
+					if (OpponentChar) OpponentChar->Multicast_TriggerDamageAnim();
+				}
+			}
+
 			if (OpponentState->Hp <= 0)
 			{
 				// 해당 라운드 종료
 				bRoundOver = true;
+
+				// 사망 애니메이션
+				if (APawn* OpponentPawn = OpponentState->GetPawn())
+				{
+					if (OpponentPawn)
+					{
+						ABRCharacter* OpponentChar = Cast<ABRCharacter>(OpponentPawn);
+						if (OpponentChar) OpponentChar->Multicast_TriggerDeathAnim();
+					}
+				}
 			}
 			else if (HasAuthority())
 			{
