@@ -73,7 +73,7 @@ void ABRCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ABRCharacter, PlayerAnimState);
 }
 
-void ABRCharacter::AttachWeaponToHand()
+void ABRCharacter::AttachShotgunToHand()
 {
 	if (BoardActor && BoardActor->GetShotgunActor())
 	{
@@ -82,7 +82,7 @@ void ABRCharacter::AttachWeaponToHand()
 	}
 }
 
-void ABRCharacter::AttachWeaponToBoard()
+void ABRCharacter::AttachShotgunToBoard()
 {
 	if (BoardActor && BoardActor->GetShotgunActor())
 	{
@@ -93,7 +93,7 @@ void ABRCharacter::AttachWeaponToBoard()
 
 void ABRCharacter::Multicast_TriggerAttackAnim_Implementation()
 {
-	AttachWeaponToHand();
+	AttachShotgunToHand();
 	TriggerAttackAnim();
 }
 
@@ -107,7 +107,7 @@ void ABRCharacter::TriggerAttackAnim()
 		FTimerDelegate::CreateLambda([&]()
 		{
 			PlayerAnimState = EPlayerAnimState::Idle;
-			AttachWeaponToBoard();
+			AttachShotgunToBoard();
 		}
 	), 2.5f, false);
 }

@@ -42,8 +42,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
 	class ABoard* BoardActor = nullptr;
 
-	void AttachWeaponToHand();
-	void AttachWeaponToBoard();
+	void AttachShotgunToHand();
+	void AttachShotgunToBoard();
 
 // 애니메이션
 	UFUNCTION(NetMulticast, Reliable)
