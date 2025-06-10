@@ -1,0 +1,44 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/SceneComponent.h"
+#include "SlotComponent.generated.h"
+
+
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class BUCKSHOTROULETTE_API USlotComponent : public USceneComponent
+{
+	GENERATED_BODY()
+
+public:
+	USlotComponent();
+
+protected:
+	virtual void BeginPlay() override;
+
+public:
+	void AttachItem(class AItem* Item);
+	void DetachItem();
+
+    UFUNCTION()
+    void OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
+
+public:
+	UPROPERTY()
+	class ABoard* BoardOwner;
+	void SetBoardOwner(class ABoard* InBoard) { BoardOwner = InBoard; }
+
+	// 슬롯에 놓인 아이템 참조
+	UPROPERTY()
+	class AItem* AttachedItem = nullptr;
+
+	// 슬롯 상태
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bHasItem = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UBoxComponent* ClickBox;
+
+};

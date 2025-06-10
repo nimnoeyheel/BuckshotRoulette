@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Types/ItemType.h"
 #include "BRGameMode.generated.h"
 
 USTRUCT(BlueprintType)
@@ -53,7 +54,10 @@ public:
 
 	// 턴 초기화
 	void PickFirstPlayer();
-	void StartGame();
+	void initializeGame();
+
+	// 라운드 시작
+	void StartRound(int32 MatchIdx, int32 RoundIdx);
 
 	// 턴 플레이어가 액션을 마쳤을 때 서버에서 호출
 	void NextTurn();
@@ -76,6 +80,16 @@ public:
 
 	int32 CurrentMatchIdx = 0;
 	int32 CurrentRoundIdx = 0;
+#pragma endregion
+
+#pragma region 아이템 시스템
+	void SetupItemsForRound(int32 MatchIdx, int32 RoundIdx);
+
+	UPROPERTY()
+	class AItemBox* ItemBox;
+
+	UPROPERTY()
+	TArray<EItemType> CurrentRoundItems;
 #pragma endregion
 
 };

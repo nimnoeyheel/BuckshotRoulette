@@ -1,9 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Types/ItemType.h"
 #include "Board.generated.h"
 
 UCLASS()
@@ -38,4 +39,18 @@ public:
 // Board
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* BoardMeshComp;
+
+// Slot & Item
+	// 슬롯 클릭 이벤트
+	void OnSlotClicked(class USlotComponent* Slot);
+
+	// 아이템 스폰
+	void SpawnItem(EItemType ItemType);
+
+	// 현재 선택된(박스에서 꺼낸) 아이템 추적
+	UPROPERTY()
+	class AItem* PendingItem = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<class USlotComponent*> SlotComponents;
 };

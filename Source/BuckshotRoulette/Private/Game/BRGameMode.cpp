@@ -3,9 +3,13 @@
 
 #include "Game/BRGameMode.h"
 #include "Game/BRGameState.h"
+#include "Actor/ItemBox.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/BRPlayerController.h"
 #include "Player/BRPlayerState.h"
 #include "Types/AmmoType.h"
+#include "Actor/Board.h"
+#include "EngineUtils.h"
 
 ABRGameMode::ABRGameMode()
 {
@@ -90,11 +94,11 @@ void ABRGameMode::PickFirstPlayer()
 		UE_LOG(LogTemp, Log, TEXT("TurnPlayer: %s"), *AllPlayers[FirstIdx]->GetPlayerName());
 
 		// 턴이 정해지면 게임 시작
-		StartGame();
+		initializeGame();
 	}
 }
 
-void ABRGameMode::StartGame()
+void ABRGameMode::initializeGame()
 {
 	// UI, 게임 보드/상태 초기화, 첫 턴 알림 등
 	UE_LOG(LogTemp, Log, TEXT("Game Start!"));
@@ -112,7 +116,45 @@ void ABRGameMode::StartGame()
 		}
 	}
 
-	SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
+	//StartRound(CurrentMatchIdx, CurrentRoundIdx);
+	// 아이템 시스템 테스트 중...
+	StartRound(1, CurrentRoundIdx);
+}
+
+void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
+{
+	// 총알 설정
+	SetupAmmoForRound(MatchIdx, RoundIdx);
+
+	// 아이템 설정
+	SetupItemsForRound(MatchIdx, RoundIdx);
+
+	// 매치2부터 아이템 시스템 시작
+	if (MatchIdx == 1)
+	{
+		if (!ItemBox)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			// 월드 기준 위치에 스폰
+			FTransform SpawnTransform = FTransform(FRotator(0), FVector(575, 580, 90));
+			ItemBox = GetWorld()->SpawnActor<AItemBox>(AItemBox::StaticClass(), SpawnTransform);
+
+			if (ItemBox)
+			{
+				ABoard* BoardActor = nullptr;
+				for (TActorIterator<ABoard> It(GetWorld()); It; ++It)
+				{
+					BoardActor = *It;
+					break;
+				}
+
+				ItemBox->SetBoardOwner(BoardActor);
+				ItemBox->InitPendingItems(CurrentRoundItems);
+			}
+		}
+	}
 }
 
 void ABRGameMode::NextTurn()
@@ -190,7 +232,7 @@ void ABRGameMode::OnRoundEnd()
 					BPS->OnRep_Hp();
 				}
 			}
-			SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
+			StartRound(CurrentMatchIdx, CurrentRoundIdx);
 			UE_LOG(LogTemp, Log, TEXT("Start New Match_%d"), CurrentMatchIdx + 1);
 		}
 		return;
@@ -200,7 +242,7 @@ void ABRGameMode::OnRoundEnd()
 	++CurrentRoundIdx;
 	if (AllMatches[CurrentMatchIdx].Rounds.IsValidIndex(CurrentRoundIdx))
 	{
-		SetupAmmoForRound(CurrentMatchIdx, CurrentRoundIdx);
+		StartRound(CurrentMatchIdx, CurrentRoundIdx);
 		// 라운드별 초기화
 		UE_LOG(LogTemp, Log, TEXT("Start Next Round_%d"), CurrentRoundIdx + 1);
 	}
@@ -314,5 +356,83 @@ void ABRGameMode::SetupAmmoForRound(int32 MatchIdx, int32 RoundIdx)
 		}
 		FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
+	}
+}
+
+void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
+{
+	CurrentRoundItems.Empty();
+
+	// 매치1은 아이템 X
+	if(MatchIdx == 0) return;
+
+	// 매치2부터 아이템 시스템 적용
+	if (MatchIdx == 1) // 매치2
+	{
+		if (RoundIdx == 0)
+		{
+			// 1 Round : 담배, 수갑
+			CurrentRoundItems.Add(EItemType::Cigarette);
+			CurrentRoundItems.Add(EItemType::Handcuff);
+		}
+		else if (RoundIdx == 1)
+		{
+			// 2 Round : 돋보기, 맥주, 칼
+			CurrentRoundItems.Add_GetRef(EItemType::Magnifier);
+			CurrentRoundItems.Add_GetRef(EItemType::Beer);
+			CurrentRoundItems.Add_GetRef(EItemType::Knife);
+		}
+		else if (RoundIdx == 2)
+		{
+			// 3 Round : 아이템 3종 랜덤 지급
+			TArray<EItemType> Pool = {
+				EItemType::Cigarette,
+				EItemType::Handcuff,
+				EItemType::Magnifier,
+				EItemType::Beer,
+				EItemType::Knife
+			};
+			for (int i = 0; i < 3; ++i)
+			{
+				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
+				CurrentRoundItems.Add(Pool[idx]);
+				//Pool.RemoveAt(idx); // 중복 방지
+			}
+		}
+	}
+	else if (MatchIdx == 2) // 매치3, 모든 라운드 아이템 3종 랜덤 지급
+	{
+		TArray<EItemType> Pool = {
+				EItemType::Cigarette,
+				EItemType::Handcuff,
+				EItemType::Magnifier,
+				EItemType::Beer,
+				EItemType::Knife
+		};
+
+		if (RoundIdx == 0)
+		{
+			for (int i = 0; i < 3; ++i)
+			{
+				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
+				CurrentRoundItems.Add(Pool[idx]);
+			}
+		}
+		else if (RoundIdx == 1)
+		{
+			for (int i = 0; i < 3; ++i)
+			{
+				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
+				CurrentRoundItems.Add(Pool[idx]);
+			}
+		}
+		else if (RoundIdx == 2)
+		{
+			for (int i = 0; i < 3; ++i)
+			{
+				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
+				CurrentRoundItems.Add(Pool[idx]);
+			}
+		}
 	}
 }
