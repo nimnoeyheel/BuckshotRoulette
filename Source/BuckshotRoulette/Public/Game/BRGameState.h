@@ -34,7 +34,7 @@ public:
 	
 #pragma region 총알 시스템
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_FireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
+	void Multicast_FireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
 
 	UPROPERTY(Replicated)
 	TArray<EAmmoType> AmmoSequence;

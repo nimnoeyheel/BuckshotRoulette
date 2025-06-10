@@ -12,6 +12,7 @@
 #include "GameFramework/PlayerState.h"
 #include "UI/GameResultWidget.h"
 #include "Character/BRCharacter.h"
+#include "Actor/Shotgun.h"
 
 ABRPlayerController::ABRPlayerController()
 {
@@ -128,6 +129,18 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	SetInputEnable(TurnPlayerState == PlayerState);
 }
 
+//void ABRPlayerController::OnUpdateNickname()
+//{
+//	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+//	if (!GS || !MainUI || !MainUI->InGameUI) return;
+//
+//	TArray<APlayerState*> Players = GS->PlayerArray;
+//	FString Player1Nick = Players[0] ? Players[0]->GetPlayerName() : TEXT(" ");
+//	FString Player2Nick = Players[1] ? Players[1]->GetPlayerName() : TEXT(" ");
+//
+//	MainUI->InGameUI->UpdatePlayerNickname(Player1Nick, Player2Nick);
+//}
+
 void ABRPlayerController::OnUpdateNewRound()
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
@@ -137,6 +150,7 @@ void ABRPlayerController::OnUpdateNewRound()
 	TArray<APlayerState*> Players = GS->PlayerArray;
 	FString Player1Nick = Players[0]->GetPlayerName();
 	FString Player2Nick = Players[1]->GetPlayerName();
+	UE_LOG(LogTemp, Log, TEXT("Player1[%s], Player2[%s]"), *Player1Nick, *Player2Nick);
 
 	MainUI->InGameUI->UpdateNewRound(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->NumLive, GS->NumBlank);
 }
@@ -225,10 +239,10 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 
 	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
 	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출
-	GS->Multicast_FireResult(TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
+	GS->Multicast_FireResult(FiringPlayerIndex, TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
 }
 
-void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
+void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
 {
 	UE_LOG(LogTemp, Log, TEXT("ABRPlayerController::OnFireResult"));
 
@@ -252,21 +266,26 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 	// 내가 타겟일 때
 	if (MyState == TargetState)
 	{
+		APawn* MyPawn = MyState->GetPawn();
+		if (!MyPawn) return; 
+		ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
+		if (!MyChar || !MyChar->GetShotgunActor()) return;
+		
+		// Self Fire Anim
+		if (FiringPlayerIndex == TargetPlayerIndex + 1)
+		{
+			bool bIsServer = MyState->PlayerIndex == 1 ? true : false;
+			MyChar->GetShotgunActor()->Multicast_TriggerSelfFireAnim(bIsServer);
+		}
+
 		if (FiredAmmo == EAmmoType::Live)
 		{
 			MyState->Hp--;
 			OnUpdateHp();
 			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *MyState->GetPlayerName());
 			
-			// 피격 애니메이션
-			if (APawn* MyPawn = MyState->GetPawn())
-			{
-				if (MyPawn)
-				{
-					ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
-					if(MyChar) MyChar->Multicast_TriggerDamageAnim();
-				}
-			}
+			// Damage Anim
+			MyChar->Multicast_TriggerDamageAnim();
 
 			// 체력이 0이하라면
 			if (MyState->Hp <= 0)
@@ -275,19 +294,11 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 				bRoundOver = true;
 
 				// 사망 애니메이션
-				if (APawn* MyPawn = MyState->GetPawn())
-				{
-					if (MyPawn)
-					{
-						ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
-						if (MyChar) MyChar->Multicast_TriggerDeathAnim();
-					}
-				}
+				MyChar->Multicast_TriggerDeathAnim();
 			}
 			else if (HasAuthority())
 			{
-				ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-				if (GM) GM->NextTurn();
+				NextTurn();
 			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
@@ -302,8 +313,7 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			else if (HasAuthority())
 			{
 				// 턴 전환
-				ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-				if (GM) GM->NextTurn();
+				NextTurn();
 			}
 		}
 	}
@@ -311,6 +321,18 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 	// 상대가 타겟일 때
 	else if (OpponentState == TargetState)
 	{
+		APawn* OpponentPawn = OpponentState->GetPawn();
+		if (!OpponentPawn) return;
+		ABRCharacter* OpponentChar = Cast<ABRCharacter>(OpponentPawn);
+		if (!OpponentChar || !OpponentChar->GetShotgunActor()) return;
+
+		// Self Fire Anim
+		if (FiringPlayerIndex == TargetPlayerIndex + 1)
+		{
+			bool bIsServer = OpponentState->PlayerIndex == 1 ? true : false;
+			OpponentChar->GetShotgunActor()->Multicast_TriggerSelfFireAnim(bIsServer);
+		}
+
 		if (FiredAmmo == EAmmoType::Live)
 		{
 			OpponentState->Hp--;
@@ -318,14 +340,7 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			UE_LOG(LogTemp, Log, TEXT("%s Damage -1"), *OpponentState->GetPlayerName());
 
 			// 피격 애니메이션
-			if (APawn* OpponentPawn = OpponentState->GetPawn())
-			{
-				if (OpponentPawn)
-				{
-					ABRCharacter* OpponentChar = Cast<ABRCharacter>(OpponentPawn);
-					if (OpponentChar) OpponentChar->Multicast_TriggerDamageAnim();
-				}
-			}
+			OpponentChar->Multicast_TriggerDamageAnim();
 
 			if (OpponentState->Hp <= 0)
 			{
@@ -333,19 +348,11 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 				bRoundOver = true;
 
 				// 사망 애니메이션
-				if (APawn* OpponentPawn = OpponentState->GetPawn())
-				{
-					if (OpponentPawn)
-					{
-						ABRCharacter* OpponentChar = Cast<ABRCharacter>(OpponentPawn);
-						if (OpponentChar) OpponentChar->Multicast_TriggerDeathAnim();
-					}
-				}
+				OpponentChar->Multicast_TriggerDeathAnim();
 			}
 			else if (HasAuthority())
 			{
-				ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-				if (GM) GM->NextTurn();
+				NextTurn();
 			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
@@ -355,8 +362,7 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 			{
 				if (HasAuthority())
 				{
-					ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-					if (GM) GM->NextTurn();
+					NextTurn();
 				}
 			}
 			// 상대가 자기 자신을 쐈다면
@@ -372,10 +378,33 @@ void ABRPlayerController::OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredA
 	if ((bIsLastAmmo || bRoundOver) && HasAuthority())
 	{
 		bIsLastAmmo = false;
-		UE_LOG(LogTemp, Log, TEXT("This Round is Last!"));
-		ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-		if (GM) GM->OnRoundEnd();
+		OnRoundEnd();
 	}
+}
+
+void ABRPlayerController::NextTurn()
+{
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+			if (GM) GM->NextTurn();
+		}
+	), 3.f, false);
+}
+
+void ABRPlayerController::OnRoundEnd()
+{
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			UE_LOG(LogTemp, Log, TEXT("This Round is Last!"));
+			ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+			if (GM) GM->OnRoundEnd();
+		}
+	), 3.f, false);
 }
 
 void ABRPlayerController::OnGameOver(ABRPlayerState* Winner)

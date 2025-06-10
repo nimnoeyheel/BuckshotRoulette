@@ -39,11 +39,16 @@ public:
 
 public:
 // 총 Attach
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
-	class ABoard* BoardActor = nullptr;
+	class AShotgun* GetShotgunActor() const;
 
 	void AttachShotgunToHand();
 	void AttachShotgunToBoard();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
+	class ABoard* BoardActor = nullptr;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Shotgun")
+	class AShotgun* ShotgunActor = nullptr;
 
 // 애니메이션
 	UFUNCTION(NetMulticast, Reliable)

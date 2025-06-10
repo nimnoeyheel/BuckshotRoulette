@@ -16,7 +16,7 @@ void ABRGameState::SetTurnPlayer(APlayerState* NewTurnPlayer)
 	}
 }
 
-void ABRGameState::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
+void ABRGameState::Multicast_FireResult_Implementation(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
 {
 
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
@@ -24,7 +24,7 @@ void ABRGameState::Multicast_FireResult_Implementation(int32 TargetPlayerIndex, 
 		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
 		if (PC)
 		{
-			PC->OnFireResult(TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
+			PC->OnFireResult(FiringPlayerIndex, TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
 		}
 	}
 }
@@ -37,6 +37,7 @@ void ABRGameState::OnRep_UpdateNewRound()
 		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
 		if (PC && PC->IsLocalController())
 		{
+			//PC->OnUpdateNickname();
 			PC->OnUpdateNewRound();
 		}
 	}

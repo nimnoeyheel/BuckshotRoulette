@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Actor/Board.h"
+#include "Actor/Shotgun.h"
 #include "EngineUtils.h"
 
 // Sets default values
@@ -51,6 +52,13 @@ void ABRCharacter::BeginPlay()
 		BoardActor = *It;
 		break;
 	}
+
+	// 월드에 존재하는 AShotgun 인스턴스를 찾기
+	for (TActorIterator<AShotgun> It(GetWorld()); It; ++It)
+	{
+		ShotgunActor = *It;
+		break;
+	}
 }
 
 // Called every frame
@@ -71,6 +79,11 @@ void ABRCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABRCharacter, PlayerAnimState);
+}
+
+AShotgun* ABRCharacter::GetShotgunActor() const
+{
+	return ShotgunActor ? ShotgunActor : nullptr;
 }
 
 void ABRCharacter::AttachShotgunToHand()

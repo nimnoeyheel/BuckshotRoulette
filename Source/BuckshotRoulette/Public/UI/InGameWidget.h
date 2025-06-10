@@ -31,6 +31,16 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UOverlay* Overlay_NicknameEntry;
 	
+// 플레이어 닉네임
+	//UFUNCTION()
+	//void UpdatePlayerNickname(const FString& Player1Nick, const FString& Player2Nick);
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_Player1;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Txt_Player2;
+
 // 턴 플레이어
 	UFUNCTION()
 	void UpdateTurnNickname(const FString& Nickname);
@@ -63,12 +73,6 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_RoundNum;
-	
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Txt_Player1;
-	
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Txt_Player2;
 	
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_AmmoInfo;

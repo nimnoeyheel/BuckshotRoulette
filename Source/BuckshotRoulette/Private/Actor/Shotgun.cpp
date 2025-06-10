@@ -90,3 +90,42 @@ void AShotgun::OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPress
 
 	PC->MainUI->InGameUI->ShowTargetSelectUI();
 }
+
+void AShotgun::Multicast_TriggerSelfFireAnim_Implementation(bool bIsServer)
+{
+	if (bIsServer)
+	{
+		SetAnimBPsFiringValue(TEXT("bIsServerFiring"));
+	}
+	else
+	{
+		SetAnimBPsFiringValue(TEXT("bIsClientFiring"));
+	}
+}
+
+void AShotgun::SetAnimBPsFiringValue(const FString VarName)
+{
+	if (ShotgunMesh && ShotgunMesh->GetAnimInstance())
+	{
+		UAnimInstance* AnimBP = ShotgunMesh->GetAnimInstance();
+		FName VarName_Firing(VarName);
+
+		// 변수 존재 체크 후 Set
+		if(FBoolProperty* Prop = FindFProperty<FBoolProperty>(AnimBP->GetClass(), VarName_Firing))
+		{
+			Prop->SetPropertyValue_InContainer(AnimBP, true);
+
+			// (SelfFireAnim Sec)
+			FTimerHandle Handle;
+			GetWorld()->GetTimerManager().SetTimer(Handle,
+				[AnimBP, VarName_Firing]()
+				{
+					if (FBoolProperty* PropInner = FindFProperty<FBoolProperty>(AnimBP->GetClass(), VarName_Firing))
+					{
+						PropInner->SetPropertyValue_InContainer(AnimBP, false);
+					}
+				},
+			2.23f, false);
+		}
+	}
+}

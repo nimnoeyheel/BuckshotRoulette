@@ -31,6 +31,7 @@ bool ABRPlayerState::ServerRPC_SetPlayerName_Validate(const FString& NewName)
 void ABRPlayerState::OnRep_PlayerName()
 {
 	Super::OnRep_PlayerName();
+
 }
 
 void ABRPlayerState::OnRep_Hp()

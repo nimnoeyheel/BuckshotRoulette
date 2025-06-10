@@ -39,4 +39,12 @@ protected:
 
     UFUNCTION()
     void OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
+
+public:
+// Self Fire
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TriggerSelfFireAnim(bool bIsServer);
+
+	UFUNCTION()
+	void SetAnimBPsFiringValue(const FString VarName);
 };

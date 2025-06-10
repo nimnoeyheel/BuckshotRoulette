@@ -31,6 +31,10 @@ public:
 	UFUNCTION()
 	void OnTurnPlayerChanged();
 
+// 플레이어 닉네임 UI 업데이트
+	//UFUNCTION()
+	//void OnUpdateNickname();
+
 // 새로운 라운드 정보 업데이트
 	UFUNCTION()
 	void OnUpdateNewRound();
@@ -47,7 +51,14 @@ public:
 	void ServerRPC_RequestFire(int32 TargetPlayerIndex);
 
 	UFUNCTION()
-	void OnFireResult(int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
+	void OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
+
+// 턴, 라운드 변경 함수 타이머
+	UFUNCTION()
+	void NextTurn();
+	
+	UFUNCTION()
+	void OnRoundEnd();
 
 // 게임 종료
 	UFUNCTION()

@@ -23,11 +23,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-// Board
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* BoardMeshComp;
-
 // Shotgun
+    AActor* GetShotgunActor() const;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     USceneComponent* Root;
 
@@ -37,6 +35,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UChildActorComponent* ShotgunChild;
 
-    AActor* GetShotgunActor() const;
-
+// Board
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* BoardMeshComp;
 };
