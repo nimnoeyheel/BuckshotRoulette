@@ -19,7 +19,7 @@ ABoard::ABoard()
 
 	// Board Mesh
 	BoardMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoardMeshComp"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> BoardPath (TEXT("/Engine/BasicShapes/Cube.Cube"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> BoardPath(TEXT("/Engine/BasicShapes/Cube.Cube"));
 	if (BoardPath.Object)
 	{
 		BoardMeshComp->SetStaticMesh(BoardPath.Object);
@@ -41,14 +41,14 @@ ABoard::ABoard()
 	// Slot
 	static const FVector SlotPositions[8] =
 	{
-		FVector(-40.f, -80.f, 5.f),
-		FVector(-40.f, -40.f, 5.f),
-		FVector(-80.f, -80.f, 5.f),
-		FVector(-80.f, -40.f, 5.f),
-		FVector(-40.f,  40.f, 5.f),
-		FVector(-40.f,  80.f, 5.f),
-		FVector(-80.f,  40.f, 5.f),
-		FVector(-80.f,  80.f, 5.f)
+		FVector(-40.f, -80.f, 10.f),
+		FVector(-40.f, -40.f, 10.f),
+		FVector(-80.f, -80.f, 10.f),
+		FVector(-80.f, -40.f, 10.f),
+		FVector(-40.f,  40.f, 10.f),
+		FVector(-40.f,  80.f, 10.f),
+		FVector(-80.f,  40.f, 10.f),
+		FVector(-80.f,  80.f, 10.f)
 	};
 
 	for (int i = 1; i <= 8; ++i)
@@ -56,7 +56,6 @@ ABoard::ABoard()
 		USlotComponent* NewSlot = CreateDefaultSubobject<USlotComponent>(*FString::Printf(TEXT("Slot%d"), i));
 		NewSlot->SetupAttachment(RootComponent);
 		NewSlot->SetRelativeLocation(SlotPositions[i - 1]);
-		NewSlot->SetBoardOwner(this);
 		SlotComponents.Add(NewSlot);
 	}
 }
@@ -65,6 +64,12 @@ ABoard::ABoard()
 void ABoard::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Board 참조
+	for (int i = 0; i < 8; ++i)
+	{
+		SlotComponents[i]->SetBoardOwner(this);
+	}
 
 }
 
@@ -94,7 +99,7 @@ void ABoard::OnSlotClicked(USlotComponent* Slot)
 void ABoard::SpawnItem(EItemType ItemType)
 {
 	// 아이템 박스 클릭 시 호출
-    FTransform SpawnTransform = FTransform(FRotator(0), FVector(-60, 0, 20)); // 위치 수정해야함
+    FTransform SpawnTransform = FTransform(FRotator(0), FVector(575, 580, 115)); // (X=575.000000,Y=580.000000,Z=115.000000)
 	AItem* Item = GetWorld()->SpawnActor<AItem>(AItem::StaticClass(), SpawnTransform);
 	if (Item)
 	{

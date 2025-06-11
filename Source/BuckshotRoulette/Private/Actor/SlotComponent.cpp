@@ -5,6 +5,7 @@
 #include "Actor/Item.h"
 #include "Components/BoxComponent.h"
 #include "Actor/Board.h"
+#include "Game/BRGameMode.h"
 
 USlotComponent::USlotComponent()
 {
@@ -13,13 +14,14 @@ USlotComponent::USlotComponent()
 	bHasItem = false;
 	AttachedItem = nullptr;
 	BoardOwner = nullptr;
+
 }
 
 void USlotComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ClickBox) 
+	if (ClickBox)
 	{
 		ClickBox = NewObject<UBoxComponent>(this, TEXT("ClickBox"));
 		ClickBox->RegisterComponent();

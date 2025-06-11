@@ -23,9 +23,11 @@ AItemBox::AItemBox()
 	// 아이템박스 외형
 	ItemBoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemBoxMesh"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> ItemBoxMeshPath (TEXT("/Engine/BasicShapes/Cube.Cube"));
-	if (ItemBoxMeshPath.Succeeded())
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> MPath(TEXT("/Engine/VREditor/Teleport/TeleportDirectionMaterial.TeleportDirectionMaterial"));
+	if (ItemBoxMeshPath.Succeeded() && MPath.Succeeded())
 	{
 		ItemBoxMesh->SetStaticMesh(ItemBoxMeshPath.Object);
+		ItemBoxMesh->SetMaterial(0, MPath.Object);
 		ItemBoxMesh->SetupAttachment(RootComponent);
 		ItemBoxMesh->SetRelativeScale3D(FVector(0.25));
 	}

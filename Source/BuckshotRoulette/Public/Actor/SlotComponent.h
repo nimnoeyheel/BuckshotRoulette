@@ -7,7 +7,7 @@
 #include "SlotComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( /*ClassGroup=(Custom), meta=(BlueprintSpawnableComponent)*/ )
 class BUCKSHOTROULETTE_API USlotComponent : public USceneComponent
 {
 	GENERATED_BODY()
@@ -40,5 +40,4 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UBoxComponent* ClickBox;
-
 };

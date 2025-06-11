@@ -85,6 +85,12 @@ public:
 #pragma region 아이템 시스템
 	void SetupItemsForRound(int32 MatchIdx, int32 RoundIdx);
 
+	void SetBoardOwner(class ABoard* InBoard) { BoardActor = InBoard; }
+	class ABoard* GetBoardOwner() const { return BoardActor; }
+
+	UPROPERTY()
+	class ABoard* BoardActor;
+
 	UPROPERTY()
 	class AItemBox* ItemBox;
 

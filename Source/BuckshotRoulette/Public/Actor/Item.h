@@ -38,4 +38,8 @@ public:
 
 	UPROPERTY()
 	class ABoard* BoardOwner = nullptr;
+
+// PlaceHolderMesh
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* PlaceHolderMesh;
 };

@@ -143,10 +143,9 @@ void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
 
 			if (ItemBox)
 			{
-				ABoard* BoardActor = nullptr;
 				for (TActorIterator<ABoard> It(GetWorld()); It; ++It)
 				{
-					BoardActor = *It;
+					SetBoardOwner(*It);
 					break;
 				}
 
