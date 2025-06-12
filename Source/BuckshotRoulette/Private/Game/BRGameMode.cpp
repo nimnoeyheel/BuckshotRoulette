@@ -10,6 +10,7 @@
 #include "Types/AmmoType.h"
 #include "Actor/Board.h"
 #include "EngineUtils.h"
+#include "GameFramework/PlayerStart.h"
 
 ABRGameMode::ABRGameMode()
 {
@@ -47,7 +48,7 @@ void ABRGameMode::PostLogin(APlayerController* NewPlayer)
 			FString uniqueId = PS->GetUniqueId()->ToString();
 			UE_LOG(LogTemp, Log, TEXT("Player UniqueId : %s"), *uniqueId);
 
-			// 추후 둘 중 하나로 UI에 반영
+			RestartPlayer(NewPlayer);
 		}
 	}
 }
@@ -55,7 +56,34 @@ void ABRGameMode::PostLogin(APlayerController* NewPlayer)
 void ABRGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
 	InitMatchConfigs();
+}
+
+AActor* ABRGameMode::ChoosePlayerStart_Implementation(AController* Player)
+{
+	 // 모든 PlayerStart 찾기
+	TArray<AActor*> PlayerStarts;
+	UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
+
+	// 순서대로 할당
+	int32 PlayerNum = 0;
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (It->Get() == Player)
+		{
+			break;
+		}
+		++PlayerNum;
+	}
+
+	if (PlayerStarts.IsValidIndex(PlayerNum))
+	{
+		return PlayerStarts[PlayerNum];
+	}
+
+	// 기본 랜덤
+	return Super::ChoosePlayerStart_Implementation(Player);
 }
 
 void ABRGameMode::TryStartGameIfReady()

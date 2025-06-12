@@ -45,6 +45,7 @@ public:
 protected:
 	virtual void PostLogin(class APlayerController* NewPlayer) override;
 	virtual void BeginPlay() override;
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
 public:
 
