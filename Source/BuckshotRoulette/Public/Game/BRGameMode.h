@@ -68,6 +68,10 @@ public:
 	
 	// 게임 종료
 	void OnGameOver(class ABRPlayerState* Winner);
+
+	// 마지막 턴 플레이어 저장
+	UPROPERTY()
+	APlayerState* LastTurnPlayer = nullptr;
 #pragma endregion
 
 #pragma region 총알 시스템
@@ -86,6 +90,8 @@ public:
 #pragma region 아이템 시스템
 	void SetupItemsForRound(int32 MatchIdx, int32 RoundIdx);
 
+	void InitSlotOwners();
+
 	void SetBoardOwner(class ABoard* InBoard) { BoardActor = InBoard; }
 	class ABoard* GetBoardOwner() const { return BoardActor; }
 
@@ -97,6 +103,12 @@ public:
 
 	UPROPERTY()
 	TArray<EItemType> CurrentRoundItems;
+
+	void NotifyItemBoxDestroyed();
+	void DecideTurnAfterItemSetup();
+
+	UPROPERTY()
+	int32 NumActiveItemBoxes = 0;
 #pragma endregion
 
 };

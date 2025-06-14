@@ -19,6 +19,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	// Called every frame
@@ -42,14 +43,31 @@ public:
 
 // Slot & Item
 	// 슬롯 클릭 이벤트
-	void OnSlotClicked(class USlotComponent* Slot);
+	void OnSlotClicked(class USlotComponent* Slot, int32 SlotIdx, class APlayerController* RequestingPlayer);
 
 	// 아이템 스폰
-	void SpawnItem(EItemType ItemType);
+	void SpawnItem(EItemType ItemType, class APlayerController* ForPlayer, bool bIsLastItem);
 
-	// 현재 선택된(박스에서 꺼낸) 아이템 추적
+	// 플레이어별 PendingItem 관리 (서버만)
 	UPROPERTY()
-	class AItem* PendingItem = nullptr;
+	TMap<APlayerController*, class AItem*> PendingItems;
+
+	UPROPERTY()
+	bool bIsLastItem = false;
+	
+	// 슬롯 오너 할당 함수
+	void SetSlotOwner(int32 SlotIdx, APlayerState* PS);
+	void SetSlotAttachedItem(int32 SlotIdx, class AItem* Item);
+
+	UFUNCTION()
+	void OnRep_SlotOwners();
+	UFUNCTION()
+	void OnRep_SlotAttachedItems();
+
+	UPROPERTY(ReplicatedUsing = OnRep_SlotOwners)
+	TArray<APlayerState*> SlotOwners;
+	UPROPERTY(ReplicatedUsing = OnRep_SlotAttachedItems)
+	TArray<class AItem*> SlotAttachedItems;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<class USlotComponent*> SlotComponents;

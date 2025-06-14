@@ -21,8 +21,11 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual void Destroyed() override;
 
 public:
     UFUNCTION()
@@ -34,21 +37,32 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AItem> ItemClass;
 
+// 보드 참조
 	void SetBoardOwner(class ABoard* InBoard) { BoardOwner = InBoard; }
 	class ABoard* GetBoardOwner() const { return BoardOwner; }
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	class ABoard* BoardOwner;
 
-	// 아이템 관리
+// 플레이어 소유권
+	void SetOwningPlayer(class APlayerController* PC) { OwningPlayer = PC; }
+	class APlayerController* GetOwningPlayer() const { return OwningPlayer; }
+
+	UPROPERTY(Replicated)
+	class APlayerController* OwningPlayer = nullptr;
+
+// 아이템 관리
 	void InitPendingItems(const TArray<EItemType>& Items);
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TArray<EItemType> PendingItems;
 	
+	UPROPERTY(Replicated)
 	int32 CurrentItemIdx = 0;
 
-	// 아이템 박스 외형
+	bool bIsLastItem = false;
+
+// 아이템 박스 외형
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UStaticMeshComponent* ItemBoxMesh;
 };

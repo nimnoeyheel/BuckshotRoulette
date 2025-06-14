@@ -23,6 +23,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 public:
 	// 아이템 사용
 	virtual void UseItem();
@@ -38,6 +40,13 @@ public:
 
 	UPROPERTY()
 	class ABoard* BoardOwner = nullptr;
+
+// 플레이어 소유권
+	void SetOwningPlayer(class APlayerController* PC) { OwningPlayer = PC; }
+	class APlayerController* GetOwningPlayer() const { return OwningPlayer; }
+
+	UPROPERTY(Replicated)
+	class APlayerController* OwningPlayer = nullptr;
 
 // PlaceHolderMesh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

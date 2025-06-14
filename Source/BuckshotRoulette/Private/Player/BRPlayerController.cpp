@@ -118,6 +118,13 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	if (!GS) return;
 
+	// 턴플레이어가 null이면 모두 활성화
+	if (GS->TurnPlayer == nullptr)
+	{
+		SetInputEnable(true);
+		return;
+	}
+
 	ABRPlayerState* TurnPlayerState = Cast<ABRPlayerState>(GS->TurnPlayer);
 	if (!TurnPlayerState || !MainUI || !MainUI->InGameUI) return;
 
@@ -244,8 +251,6 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 
 void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
 {
-	UE_LOG(LogTemp, Log, TEXT("ABRPlayerController::OnFireResult"));
-
 	bool bRoundOver = false;
 
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
@@ -261,7 +266,6 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 	{
 		if (PS != MyState) OpponentState = Cast<ABRPlayerState>(PS);
 	}
-	UE_LOG(LogTemp, Log, TEXT("TargetPlayer is %s"), *TargetState->GetPlayerName());
 
 	// 내가 타겟일 때
 	if (MyState == TargetState)
@@ -307,7 +311,7 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			if (MyState == GS->TurnPlayer)
 			{
 				// 턴 유지
-				UE_LOG(LogTemp, Log, TEXT("%s 턴 유지"), *MyState->GetPlayerName());
+				UE_LOG(LogTemp, Log, TEXT("%s keep the Turn"), *MyState->GetPlayerName());
 			}
 			// 상대가 나를 쐈다면
 			else if (HasAuthority())

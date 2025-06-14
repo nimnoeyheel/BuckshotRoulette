@@ -4,6 +4,8 @@
 #include "Actor/Item.h"
 #include "Actor/SlotComponent.h"
 #include "Actor/Board.h"
+#include "GameFramework/PlayerController.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AItem::AItem()
@@ -36,6 +38,12 @@ void AItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+   Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+   DOREPLIFETIME(AItem, OwningPlayer);
 }
 
 void AItem::UseItem()

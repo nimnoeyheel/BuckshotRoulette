@@ -4,6 +4,10 @@
 #include "Actor/ItemBox.h"
 #include "Actor/Board.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Game/BRGameMode.h"
+#include "Player/BRPlayerController.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AItemBox::AItemBox()
@@ -31,6 +35,8 @@ AItemBox::AItemBox()
 		ItemBoxMesh->SetupAttachment(RootComponent);
 		ItemBoxMesh->SetRelativeScale3D(FVector(0.25));
 	}
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -41,6 +47,15 @@ void AItemBox::BeginPlay()
 	if(BoxComp) BoxComp->OnClicked.AddDynamic(this, &AItemBox::OnBoxClicked);
 }
 
+void AItemBox::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AItemBox, BoardOwner);
+	DOREPLIFETIME(AItemBox, OwningPlayer);
+	DOREPLIFETIME(AItemBox, PendingItems);
+	DOREPLIFETIME(AItemBox, CurrentItemIdx);
+}
+
 // Called every frame
 void AItemBox::Tick(float DeltaTime)
 {
@@ -48,18 +63,41 @@ void AItemBox::Tick(float DeltaTime)
 
 }
 
+void AItemBox::Destroyed()
+{
+	Super::Destroyed();
+
+	// GameMode에 박스 소멸 알림
+	if (HasAuthority())
+	{
+		ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+		if(GM) GM->NotifyItemBoxDestroyed();
+	}
+}
+
 void AItemBox::OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
+	// 플레이어 권한 체크 (혹은 본인만 클릭 가능)
+	APlayerController* MyPC = UGameplayStatics::GetPlayerController(this, 0);
+	if (MyPC != OwningPlayer) return;
+	
 	// 아이템이 스폰되고 SlotComp에 Attach되기 전까지 클릭 방지
 
 	if (PendingItems.IsValidIndex(CurrentItemIdx))
 	{
 		EItemType NextItem = PendingItems[CurrentItemIdx];
-		if (BoardOwner) BoardOwner->SpawnItem(NextItem);
-		++CurrentItemIdx;
+		if (BoardOwner)
+		{
+			++CurrentItemIdx;
+			bIsLastItem = CurrentItemIdx >= PendingItems.Num() ? true : false;
+			BoardOwner->SpawnItem(NextItem, OwningPlayer, bIsLastItem);
+		}
 
 		// 마지막 아이템까지 모두 꺼내면 박스 제거
-		if(CurrentItemIdx >= PendingItems.Num()) Destroy();
+		if (CurrentItemIdx >= PendingItems.Num())
+		{
+			Destroy();
+		}
 	}
 }
 

@@ -11,10 +11,11 @@
 #include "Actor/Board.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
+#include "Actor/SlotComponent.h"
 
 ABRGameMode::ABRGameMode()
 {
-	static ConstructorHelpers::FClassFinder<APawn> BRPlayerRef (TEXT("/Script/BuckshotRoulette.BRCharacter"));
+	static ConstructorHelpers::FClassFinder<APawn> BRPlayerRef(TEXT("/Script/BuckshotRoulette.BRCharacter"));
 	if (BRPlayerRef.Class)
 	{
 		DefaultPawnClass = BRPlayerRef.Class;
@@ -97,13 +98,13 @@ void ABRGameMode::TryStartGameIfReady()
 		ABRPlayerState* PS = PC ? Cast<ABRPlayerState>(PC->PlayerState) : nullptr;
 
 		// 플레이어가 닉네임을 입력했으면
-		if(PS && PS->bNicknameEntered)
+		if (PS && PS->bNicknameEntered)
 		{
 			ReadyCount++;
 		}
 	}
 	// 2명 모두 닉네임 입력 완료 시 선공 플레이어 랜덤 결정
-	if(ReadyCount == 2) PickFirstPlayer();
+	if (ReadyCount == 2) PickFirstPlayer();
 }
 
 void ABRGameMode::PickFirstPlayer()
@@ -111,7 +112,7 @@ void ABRGameMode::PickFirstPlayer()
 	// 연결된 모든 PlayerState 가져오기
 	TArray<APlayerState*> AllPlayers = GameState->PlayerArray;
 
-	int32 FirstIdx = FMath::RandRange(0, AllPlayers.Num() -1);
+	int32 FirstIdx = FMath::RandRange(0, AllPlayers.Num() - 1);
 
 	// 선공 플레이어 지정
 	ABRGameState* GS = Cast<ABRGameState>(GameState);
@@ -143,10 +144,12 @@ void ABRGameMode::initializeGame()
 			BPS->OnRep_Hp(); // 서버의 UI도 업데이트해주기 위해 직접 호출
 		}
 	}
+	
+	// 슬롯 오너 설정
+	InitSlotOwners();
 
-	//StartRound(CurrentMatchIdx, CurrentRoundIdx);
-	// 아이템 시스템 테스트 중...
-	StartRound(1, CurrentRoundIdx);
+	StartRound(CurrentMatchIdx, CurrentRoundIdx);
+	//StartRound(1, CurrentRoundIdx);
 }
 
 void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
@@ -158,36 +161,52 @@ void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
 	SetupItemsForRound(MatchIdx, RoundIdx);
 
 	// 매치2부터 아이템 시스템 시작
-	if (MatchIdx == 1)
+	if (MatchIdx >= 1 && !ItemBox)
 	{
-		if (!ItemBox)
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		NumActiveItemBoxes = 0;
 
-			// 월드 기준 위치에 스폰
-			FTransform SpawnTransform = FTransform(FRotator(0), FVector(575, 580, 90));
+		TArray<APlayerController*> PCs;
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			APlayerController* PC = It->Get();
+			if (!PC) continue;
+			PCs.Add(PC);
+
+			FVector SpawnLoc;
+			if (PCs.Num() == 1) SpawnLoc = FVector(420, 580, 90);	// 서버
+			else SpawnLoc = FVector(575, 580, 90);					// 클라
+
+			FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
 			ItemBox = GetWorld()->SpawnActor<AItemBox>(AItemBox::StaticClass(), SpawnTransform);
 
 			if (ItemBox)
 			{
-				for (TActorIterator<ABoard> It(GetWorld()); It; ++It)
-				{
-					SetBoardOwner(*It);
-					break;
-				}
-
+				ItemBox->SetOwningPlayer(PC);
 				ItemBox->SetBoardOwner(BoardActor);
 				ItemBox->InitPendingItems(CurrentRoundItems);
+				ItemBox->SetReplicates(true);
+				NumActiveItemBoxes++; // 박스 스폰 시마다 1씩 증가
 			}
 		}
+		// 턴플레이어는 null로 초기화(아이템 준비 끝날때까지)
+		ABRGameState* GS = GetGameState<ABRGameState>();
+		if (GS) GS->SetTurnPlayer(nullptr);
 	}
 }
 
 void ABRGameMode::NextTurn()
 {
 	ABRGameState* GS = Cast<ABRGameState>(GameState);
-	if(!GS) return;
+	if (!GS) return;
+
+	// 현재 턴플레이어 저장
+	if (GS->TurnPlayer) LastTurnPlayer = GS->TurnPlayer;
+
+	// 턴 넘기기
+	/*TArray<APlayerState*> Players = GS->PlayerArray;
+	int32 CurrentIdx = Players.IndexOfByKey(GS->TurnPlayer);
+	int32 NextIdx = (CurrentIdx + 1) % Players.Num();
+	GS->SetTurnPlayer(Players[NextIdx]);*/
 
 	TArray<APlayerState*> Players = GameState->PlayerArray;
 	if (GS->TurnPlayer == Players[0])
@@ -282,7 +301,7 @@ void ABRGameMode::OnGameOver(class ABRPlayerState* Winner)
 		if (ABRPlayerController* PC = Cast<ABRPlayerController>(PS->GetOwner()))
 		{
 			bool bIsWinner = (PS == Winner);
-			
+
 			UE_LOG(LogTemp, Log, TEXT("PS : %s"), *PS->GetPlayerName());
 			UE_LOG(LogTemp, Log, TEXT("Winner : %s"), *Winner->GetPlayerName());
 
@@ -338,7 +357,7 @@ void ABRGameMode::SetupAmmoForRound(int32 MatchIdx, int32 RoundIdx)
 	// AllMatches[MatchIdx].Rounds[RoundIdx]의 NumLive/NumBlank 값 이용
 	if (!AllMatches.IsValidIndex(MatchIdx)) return;
 	const FMatchConfig& Match = AllMatches[MatchIdx];
-	if(!Match.Rounds.IsValidIndex(RoundIdx)) return;
+	if (!Match.Rounds.IsValidIndex(RoundIdx)) return;
 	const FRoundAmmoConfig& Round = Match.Rounds[RoundIdx];
 
 	// 실탄/공탄 배열 만들기
@@ -349,10 +368,10 @@ void ABRGameMode::SetupAmmoForRound(int32 MatchIdx, int32 RoundIdx)
 	// 랜덤 셔플
 	for (int i = 0; i < NewAmmo.Num(); ++i)
 	{
-		int SwapIdx = FMath::RandRange(0, NewAmmo.Num()-1);
+		int SwapIdx = FMath::RandRange(0, NewAmmo.Num() - 1);
 		NewAmmo.Swap(i, SwapIdx);
 	}
-	
+
 	// GameState Replicated 변수 초기화
 	ABRGameState* GS = GetGameState<ABRGameState>();
 	GS->AmmoSequence = NewAmmo;
@@ -391,7 +410,7 @@ void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
 	CurrentRoundItems.Empty();
 
 	// 매치1은 아이템 X
-	if(MatchIdx == 0) return;
+	if (MatchIdx == 0) return;
 
 	// 매치2부터 아이템 시스템 적용
 	if (MatchIdx == 1) // 매치2
@@ -462,4 +481,65 @@ void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
 			}
 		}
 	}
+}
+
+void ABRGameMode::InitSlotOwners()
+{
+	for (TActorIterator<ABoard> BoardIt(GetWorld()); BoardIt; ++BoardIt)
+	{
+		SetBoardOwner(*BoardIt);
+		break;
+	}
+
+	if (!BoardActor || BoardActor->SlotComponents.Num() < 16) return;
+
+	// 플레이어컨트롤러 배열
+	TArray<APlayerState*> PSs;
+	for (APlayerState* PS : GameState->PlayerArray)
+	{
+		if (PS) PSs.Add(PS);
+	}
+
+	// 0~7: 서버, 8~15: 클라
+	for (int i = 0; i < 8; ++i)
+	{
+		BoardActor->SetSlotOwner(i, PSs[0]);
+		BoardActor->OnRep_SlotOwners();
+	}
+	for (int i = 8; i < 16; ++i)
+	{
+		BoardActor->SetSlotOwner(i, PSs[1]);
+		BoardActor->OnRep_SlotOwners();
+	}
+}
+
+void ABRGameMode::NotifyItemBoxDestroyed()
+{
+	// NumActiveItemBoxes = FMath::Max(NumActiveItemBoxes - 1, 0);
+	NumActiveItemBoxes--;
+	if (NumActiveItemBoxes > 0) return;
+
+	// 모두 소멸: 본격 라운드 시작
+	DecideTurnAfterItemSetup();
+}
+
+void ABRGameMode::DecideTurnAfterItemSetup()
+{
+	ABRGameState* GS = GetGameState<ABRGameState>();
+	if (!GS) return;
+
+	TArray<APlayerState*> AllPlayers = GS->PlayerArray;
+	if (AllPlayers.Num() < 2) return;
+
+	int32 StartIdx = 0;
+
+	// LastTurnPlayer가 nullptr가 아니라면 다음 인덱스를 찾음
+	if (LastTurnPlayer)
+	{
+		int32 LastIdx = AllPlayers.IndexOfByKey(LastTurnPlayer);
+		StartIdx = (LastIdx + 1) % AllPlayers.Num();
+	}
+
+	GS->SetTurnPlayer(AllPlayers[StartIdx]);
+	UE_LOG(LogTemp, Log, TEXT("[DecideTurnAfterItemSetup] TurnPlayer: %s"), *AllPlayers[StartIdx]->GetPlayerName());
 }

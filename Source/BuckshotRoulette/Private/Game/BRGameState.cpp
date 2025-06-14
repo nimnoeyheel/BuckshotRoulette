@@ -6,6 +6,7 @@
 #include "Player/BRPlayerController.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerState.h"
+#include "Kismet/GameplayStatics.h"
 
 void ABRGameState::SetTurnPlayer(APlayerState* NewTurnPlayer)
 {
@@ -67,6 +68,12 @@ void ABRGameState::OnRep_TurnPlayer()
 			PC->OnTurnPlayerChanged();
 		}
 	}
+
+	/*ABRPlayerController* PC = Cast<ABRPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	if (PC)
+	{
+		PC->OnTurnPlayerChanged();
+	}*/
 }
 
 void ABRGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

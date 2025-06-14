@@ -7,6 +7,9 @@
 #include "Actor/Item.h"
 #include "Actor/SlotComponent.h"
 #include "Components/BoxComponent.h"
+#include "GameFramework/PlayerState.h"
+#include "Net/UnrealNetwork.h"
+#include "Actor/ItemBox.h"
 
 // Sets default values
 ABoard::ABoard()
@@ -39,8 +42,19 @@ ABoard::ABoard()
 	ShotgunChild->SetRelativeRotation(FRotator(0, 0, -90)); // (Pitch=0.000000,Yaw=0.000000,Roll=-90.000000)
 
 	// Slot
-	static const FVector SlotPositions[8] =
+	static const FVector SlotPositions[16] =
 	{
+		// 서버 슬롯
+		FVector(80.f, -80.f, 10.f),
+		FVector(80.f, -40.f, 10.f),
+		FVector(40.f, -80.f, 10.f),
+		FVector(40.f, -40.f, 10.f),
+		FVector(80.f,  40.f, 10.f),
+		FVector(80.f,  40.f, 10.f),
+		FVector(40.f,  40.f, 10.f),
+		FVector(40.f,  40.f, 10.f),
+
+		// 클라 슬롯
 		FVector(-40.f, -80.f, 10.f),
 		FVector(-40.f, -40.f, 10.f),
 		FVector(-80.f, -80.f, 10.f),
@@ -51,13 +65,15 @@ ABoard::ABoard()
 		FVector(-80.f,  80.f, 10.f)
 	};
 
-	for (int i = 1; i <= 8; ++i)
+	for (int i = 0; i < 16; ++i)
 	{
-		USlotComponent* NewSlot = CreateDefaultSubobject<USlotComponent>(*FString::Printf(TEXT("Slot%d"), i));
+		USlotComponent* NewSlot = CreateDefaultSubobject<USlotComponent>(*FString::Printf(TEXT("Slot%d"), i + 1));
 		NewSlot->SetupAttachment(RootComponent);
-		NewSlot->SetRelativeLocation(SlotPositions[i - 1]);
+		NewSlot->SetRelativeLocation(SlotPositions[i]);
 		SlotComponents.Add(NewSlot);
 	}
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -65,12 +81,22 @@ void ABoard::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Board 참조
-	for (int i = 0; i < 8; ++i)
+	// Board의 SlotOwner/SlotAttachedItems 초기화
+	SlotOwners.SetNum(SlotComponents.Num());
+	SlotAttachedItems.SetNum(SlotComponents.Num());
+
+	// 슬롯에 BoardOwner 할당
+	for (int i = 0; i < 16; ++i)
 	{
 		SlotComponents[i]->SetBoardOwner(this);
 	}
+}
 
+void ABoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ABoard, SlotOwners);
+	DOREPLIFETIME(ABoard, SlotAttachedItems);
 }
 
 // Called every frame
@@ -85,26 +111,108 @@ AActor* ABoard::GetShotgunActor() const
 	return ShotgunChild ? ShotgunChild->GetChildActor() : nullptr;
 }
 
-void ABoard::OnSlotClicked(USlotComponent* Slot)
+#include "EngineUtils.h" // Ensure this include is present for TActorIterator
+
+void ABoard::OnSlotClicked(class USlotComponent* Slot, int32 SlotIdx, APlayerController* RequestingPlayer)
 {
-	if(!Slot || Slot->bHasItem || !PendingItem) return;
+   if (!Slot || Slot->bHasItem) return;
+   if (!SlotOwners.IsValidIndex(SlotIdx)) return;
+   if (!RequestingPlayer || !RequestingPlayer->PlayerState) return;
 
-	// 슬롯에 아이템을 Attach
-	Slot->AttachItem(PendingItem);
-	PendingItem = nullptr;
+   // 내 슬롯 소유자인지 체크
+   if (SlotOwners[SlotIdx] != RequestingPlayer->PlayerState) return;
+   if (!PendingItems.Contains(RequestingPlayer)) return;
 
-	// 아이템 모두 배치됐는지 체크 -> 박스 제거 등 로직
+   AItem* Item = PendingItems[RequestingPlayer];
+   if (!Item) return;
+
+   // 슬롯에 아이템을 Attach
+   Slot->AttachItem(Item); // 서버에서 실행하면 Replicated 자동 동기화
+   PendingItems.Remove(RequestingPlayer);
+
+   // 아이템 모두 배치됐는지 체크 -> 박스 제거 등 로직
+   /*if (bIsLastItem)
+   {
+	   for (TActorIterator<AItemBox> ItemBox(GetWorld()); ItemBox; ++ItemBox)
+	   {
+		   AItemBox* Box = Cast<AItemBox>(*ItemBox);
+		   if (Box->GetOwningPlayer() == RequestingPlayer)
+		   {
+			   Box->Destroy();
+			   bIsLastItem = false;
+		   }
+	   }
+   }*/
 }
 
-void ABoard::SpawnItem(EItemType ItemType)
+void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _bIsLastItem)
 {
 	// 아이템 박스 클릭 시 호출
-    FTransform SpawnTransform = FTransform(FRotator(0), FVector(575, 580, 115)); // (X=575.000000,Y=580.000000,Z=115.000000)
+	// 서버 FVector(420, 580, 115)
+	// 클라 FVector(575, 580, 115)
+	FVector SpawnLoc;
+	if (ForPlayer->HasAuthority()) SpawnLoc = FVector(420, 580, 115);
+	else SpawnLoc = FVector(575, 580, 115);
+
+	FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
 	AItem* Item = GetWorld()->SpawnActor<AItem>(AItem::StaticClass(), SpawnTransform);
 	if (Item)
 	{
-		PendingItem = Item;
-		Item->SetBoardOwner(this); // 아이템 테이블 참조시 필요
+		Item->SetReplicates(true);
+		Item->SetReplicateMovement(true);
+		Item->SetBoardOwner(this);
+		Item->SetOwningPlayer(ForPlayer);
+		PendingItems.Add(ForPlayer, Item);
+		bIsLastItem = _bIsLastItem;
+		//PendingItem = Item;
+	}
+}
+
+void ABoard::SetSlotOwner(int32 SlotIdx, APlayerState* PS)
+{
+	if (SlotOwners.IsValidIndex(SlotIdx))
+	{
+		SlotOwners[SlotIdx] = PS;
+		// 서버에서는 바로 SlotComponent에도 반영
+		if (SlotComponents.IsValidIndex(SlotIdx))
+		{
+			SlotComponents[SlotIdx]->SlotOwner = PS;
+		}
+	}
+}
+
+void ABoard::SetSlotAttachedItem(int32 SlotIdx, AItem* Item)
+{
+	if (SlotAttachedItems.IsValidIndex(SlotIdx))
+	{
+		SlotAttachedItems[SlotIdx] = Item;
+		// 서버에서는 바로 SlotComponent에도 반영
+		if (SlotComponents.IsValidIndex(SlotIdx))
+		{
+			SlotComponents[SlotIdx]->AttachedItem = Item;
+		}
+	}
+}
+
+void ABoard::OnRep_SlotOwners()
+{
+	for (int32 i = 0; i < SlotComponents.Num(); ++i)
+	{
+		if (SlotComponents.IsValidIndex(i))
+		{
+			SlotComponents[i]->SlotOwner = SlotOwners.IsValidIndex(i) ? SlotOwners[i] : nullptr;
+		}
+	}
+}
+
+void ABoard::OnRep_SlotAttachedItems()
+{
+	for (int32 i = 0; i < SlotComponents.Num(); ++i)
+	{
+		if (SlotComponents.IsValidIndex(i))
+		{
+			SlotComponents[i]->AttachedItem = SlotAttachedItems.IsValidIndex(i) ? SlotAttachedItems[i] : nullptr;
+		}
 	}
 }
 
