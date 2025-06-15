@@ -30,6 +30,53 @@ void ABRGameState::Multicast_FireResult_Implementation(int32 FiringPlayerIndex, 
 	}
 }
 
+void ABRGameState::RemoveNextAmmo()
+{
+	// 삭제 전 로그출력
+	for (int i = 0; i < AmmoSequence.Num(); ++i)
+	{
+		FString AmmoTypeName;
+		switch (AmmoSequence[i])
+		{
+			case EAmmoType::Live:
+				AmmoTypeName = TEXT("Live");
+				break;
+			case EAmmoType::Blank:
+				AmmoTypeName = TEXT("Blank");
+				break;
+			default:
+				break;
+		}
+		FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
+	}
+
+	if (AmmoSequence.IsValidIndex(CurrentAmmoIndex))
+	{
+		AmmoSequence.RemoveAt(CurrentAmmoIndex);
+		CurrentAmmoIndex = FMath::Clamp(CurrentAmmoIndex, 0, AmmoSequence.Num() - 1);
+
+		// 삭제 후 로그출력
+		for (int i = 0; i < AmmoSequence.Num(); ++i)
+		{
+			FString AmmoTypeName;
+			switch (AmmoSequence[i])
+			{
+				case EAmmoType::Live:
+					AmmoTypeName = TEXT("Live");
+					break;
+				case EAmmoType::Blank:
+					AmmoTypeName = TEXT("Blank");
+					break;
+				default:
+					break;
+			}
+			FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
+		}
+	}
+}
+
 void ABRGameState::OnRep_UpdateNewRound()
 {
 	// 모든 PlayerController에 새로운 라운드 정보 업데이트 알림

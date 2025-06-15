@@ -13,6 +13,7 @@
 #include "Player/BRPlayerState.h"
 #include "EngineUtils.h"
 #include "Game/BRGameMode.h"
+#include "Actor/BeerItem.h"
 
 // Sets default values
 ABoard::ABoard()
@@ -158,15 +159,42 @@ void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _b
 	FVector SpawnLoc = (PlayerIdx == 1)
 		? FVector(420, 580, 115)
 		: FVector(575, 580, 115);
-
 	FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
-	AItem* Item = GetWorld()->SpawnActor<AItem>(AItem::StaticClass(), SpawnTransform);
+
+	TSubclassOf<AItem> ItemClass = AItem::StaticClass();
+	switch (ItemType)
+	{
+		case EItemType::Beer:
+			ItemClass = ABeerItem::StaticClass();
+			break;
+		case EItemType::Cigarette:
+			ItemClass = ABeerItem::StaticClass();
+			//ItemClass = ACigaretteItem::StaticClass();
+			break;
+		case EItemType::Handcuff:
+			ItemClass = ABeerItem::StaticClass();
+			//ItemClass = AHandcuffItem::StaticClass();
+			break;
+		case EItemType::Magnifier:
+			ItemClass = ABeerItem::StaticClass();
+			//ItemClass = AMagnifierItem::StaticClass();
+			break;
+		case EItemType::Knife:
+			ItemClass = ABeerItem::StaticClass();
+			//ItemClass = AKnifeItem::StaticClass();
+			break;
+		default:
+			break;
+	}
+
+	AItem* Item = GetWorld()->SpawnActor<AItem>(ItemClass, SpawnTransform);
 	if (Item)
 	{
 		Item->SetReplicates(true);
 		Item->SetReplicateMovement(true);
 		Item->SetBoardOwner(this);
 		Item->SetOwningPlayer(ForPlayer);
+		Item->SetOwner(ForPlayer);
 		PendingItems.Add(ForPlayer, Item);
 		bIsLastItem = _bIsLastItem;
 	}

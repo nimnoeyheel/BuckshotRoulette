@@ -21,7 +21,7 @@ struct FItemData
 {
 	GENERATED_BODY()
 
-		UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EItemType ItemType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

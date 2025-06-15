@@ -6,6 +6,7 @@
 #include "Actor/Board.h"
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
+#include "Player/BRPlayerController.h"
 
 // Sets default values
 AItem::AItem()
@@ -47,6 +48,7 @@ void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 {
    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
    DOREPLIFETIME(AItem, OwningPlayer);
+   DOREPLIFETIME(AItem, BoardOwner);
 }
 
 void AItem::UseItem()
@@ -55,6 +57,23 @@ void AItem::UseItem()
 	// 사용 후 아이템 액터 제거 및 슬롯 Detach
 	if(AttachedSlot) AttachedSlot->DetachItem();
 	Destroy();
+}
+
+void AItem::OnRep_BoardOwner()
+{
+}
+
+bool AItem::IsOwnedByLocalPlayer() const
+{
+	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (!PC || !BoardOwner) return false;
+
+	// 슬롯 인덱스 추출
+	int32 SlotIdx = BoardOwner->SlotAttachedItems.Find(const_cast<AItem*>(this));
+	if (!BoardOwner->SlotOwners.IsValidIndex(SlotIdx)) return false;
+
+	// 슬롯 소유자가 내 PlayerState와 같은지 비교
+	return BoardOwner->SlotOwners[SlotIdx] == PC->PlayerState;
 }
 
 
