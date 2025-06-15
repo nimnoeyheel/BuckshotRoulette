@@ -64,6 +64,10 @@ public:
 	UFUNCTION()
 	void OnGameOver(class ABRPlayerState* Winner);
 
+// 아이템 관련
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ClickSlot(class USlotComponent* SlotComp, int32 SlotIdx);
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<class UMainWidget> MainWidgetClass;

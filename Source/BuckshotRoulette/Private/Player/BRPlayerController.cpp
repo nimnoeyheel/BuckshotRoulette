@@ -13,6 +13,8 @@
 #include "UI/GameResultWidget.h"
 #include "Character/BRCharacter.h"
 #include "Actor/Shotgun.h"
+#include "Actor/SlotComponent.h"
+#include "Actor/Board.h"
 
 ABRPlayerController::ABRPlayerController()
 {
@@ -434,4 +436,12 @@ void ABRPlayerController::OnGameOver(ABRPlayerState* Winner)
 		MainUI->ResultUI->SetLoserNickname(PS->GetPlayerName());
 	}
 	MainUI->ShowResult(bIsWinner);
+}
+
+void ABRPlayerController::ServerRPC_ClickSlot_Implementation(USlotComponent* SlotComp, int32 SlotIdx)
+{
+	if (SlotComp && SlotComp->BoardOwner)
+	{
+		SlotComp->BoardOwner->OnSlotClicked(SlotComp, SlotIdx, this);
+	}
 }

@@ -7,6 +7,7 @@
 #include "Actor/Board.h"
 #include "Game/BRGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/BRPlayerController.h"
 
 USlotComponent::USlotComponent()
 {
@@ -22,22 +23,19 @@ void USlotComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//if (ClickBox)
-	//{
-		ClickBox = NewObject<UBoxComponent>(this, TEXT("ClickBox"));
-		if(ClickBox)
-		{
-			ClickBox->RegisterComponent();
-			ClickBox->AttachToComponent(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-			ClickBox->SetBoxExtent(FVector(18, 18, 10));
-			ClickBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-			ClickBox->SetCollisionObjectType(ECC_WorldDynamic);
-			ClickBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-			ClickBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	ClickBox = NewObject<UBoxComponent>(this, TEXT("ClickBox"));
+	if (ClickBox)
+	{
+		ClickBox->RegisterComponent();
+		ClickBox->AttachToComponent(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		ClickBox->SetBoxExtent(FVector(18, 18, 10));
+		ClickBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		ClickBox->SetCollisionObjectType(ECC_WorldDynamic);
+		ClickBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+		ClickBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
-			ClickBox->OnClicked.AddDynamic(this, &USlotComponent::OnBoxClicked);
-		}
-	//}
+		ClickBox->OnClicked.AddDynamic(this, &USlotComponent::OnBoxClicked);
+	}
 }
 
 void USlotComponent::AttachItem(AItem* Item)
@@ -93,14 +91,25 @@ void USlotComponent::OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey Bu
 {
 	UE_LOG(LogTemp, Log, TEXT("Clicked On Slot"));
 
-	// 슬롯이 비어있을 때만 처리
-	if(bHasItem || !BoardOwner) return;
+	if (bHasItem || !BoardOwner) return;
 
 	int32 SlotIdx = BoardOwner->SlotComponents.Find(this);
 	if (SlotIdx == INDEX_NONE) return;
-	
-	// Board에 슬롯이 클릭되었음을 알림
-	APlayerController* MyPC = UGameplayStatics::GetPlayerController(this, 0);
-	BoardOwner->OnSlotClicked(this, SlotIdx, MyPC);
+
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+
+	if (PC && !PC->HasAuthority())
+	{
+		// 클라에서 → 본인 PC 통해 서버 호출
+		ABRPlayerController* MyPC = Cast<ABRPlayerController>(PC);
+		if (MyPC)
+		{
+			MyPC->ServerRPC_ClickSlot(this, SlotIdx);
+		}
+		return;
+	}
+
+	// 서버에서 직접 처리
+	BoardOwner->OnSlotClicked(this, SlotIdx, PC);
 }
 

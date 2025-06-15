@@ -175,9 +175,11 @@ void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
 			FVector SpawnLoc;
 			if (PCs.Num() == 1) SpawnLoc = FVector(420, 580, 90);	// 서버
 			else SpawnLoc = FVector(575, 580, 90);					// 클라
-
 			FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
-			ItemBox = GetWorld()->SpawnActor<AItemBox>(AItemBox::StaticClass(), SpawnTransform);
+
+			FActorSpawnParameters Params;
+			Params.Owner = PC;
+			ItemBox = GetWorld()->SpawnActor<AItemBox>(AItemBox::StaticClass(), SpawnTransform, Params);
 
 			if (ItemBox)
 			{
@@ -541,5 +543,4 @@ void ABRGameMode::DecideTurnAfterItemSetup()
 	}
 
 	GS->SetTurnPlayer(AllPlayers[StartIdx]);
-	UE_LOG(LogTemp, Log, TEXT("[DecideTurnAfterItemSetup] TurnPlayer: %s"), *AllPlayers[StartIdx]->GetPlayerName());
 }

@@ -44,6 +44,8 @@ void AItemBox::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	SetReplicates(true);
+
 	if(BoxComp) BoxComp->OnClicked.AddDynamic(this, &AItemBox::OnBoxClicked);
 }
 
@@ -67,6 +69,8 @@ void AItemBox::Destroyed()
 {
 	Super::Destroyed();
 
+	UE_LOG(LogTemp, Log, TEXT("AItemBox::Destroyed()"));
+
 	// GameMode에 박스 소멸 알림
 	if (HasAuthority())
 	{
@@ -77,12 +81,18 @@ void AItemBox::Destroyed()
 
 void AItemBox::OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
-	// 플레이어 권한 체크 (혹은 본인만 클릭 가능)
+	UE_LOG(LogTemp, Log, TEXT("AItemBox::OnBoxClicked"));
+
+	// 플레이어 권한 체크
 	APlayerController* MyPC = UGameplayStatics::GetPlayerController(this, 0);
 	if (MyPC != OwningPlayer) return;
-	
-	// 아이템이 스폰되고 SlotComp에 Attach되기 전까지 클릭 방지
 
+	Server_OnBoxClicked();
+}
+
+void AItemBox::Server_OnBoxClicked_Implementation()
+{
+	// 아이템이 스폰되고 SlotComp에 Attach되기 전까지 클릭 방지
 	if (PendingItems.IsValidIndex(CurrentItemIdx))
 	{
 		EItemType NextItem = PendingItems[CurrentItemIdx];
@@ -91,12 +101,6 @@ void AItemBox::OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPr
 			++CurrentItemIdx;
 			bIsLastItem = CurrentItemIdx >= PendingItems.Num() ? true : false;
 			BoardOwner->SpawnItem(NextItem, OwningPlayer, bIsLastItem);
-		}
-
-		// 마지막 아이템까지 모두 꺼내면 박스 제거
-		if (CurrentItemIdx >= PendingItems.Num())
-		{
-			Destroy();
 		}
 	}
 }

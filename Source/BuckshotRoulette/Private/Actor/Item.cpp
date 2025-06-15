@@ -24,6 +24,8 @@ AItem::AItem()
 		PlaceHolderMesh->SetupAttachment(RootComponent);
 		PlaceHolderMesh->SetRelativeScale3D(FVector(0.2f)); // (X=0.200000,Y=0.200000,Z=0.200000)
 	}
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -31,6 +33,7 @@ void AItem::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	SetReplicates(true);
 }
 
 // Called every frame

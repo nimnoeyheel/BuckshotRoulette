@@ -46,11 +46,14 @@ public:
 	void OnSlotClicked(class USlotComponent* Slot, int32 SlotIdx, class APlayerController* RequestingPlayer);
 
 	// 아이템 스폰
-	void SpawnItem(EItemType ItemType, class APlayerController* ForPlayer, bool bIsLastItem);
+	void SpawnItem(EItemType ItemType, class APlayerController* ForPlayer, bool _bIsLastItem);
 
 	// 플레이어별 PendingItem 관리 (서버만)
 	UPROPERTY()
 	TMap<APlayerController*, class AItem*> PendingItems;
+
+	UPROPERTY()
+	TMap<APlayerController*, bool> bAttachDoneMap;
 
 	UPROPERTY()
 	bool bIsLastItem = false;

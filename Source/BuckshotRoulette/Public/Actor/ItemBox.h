@@ -31,6 +31,9 @@ public:
     UFUNCTION()
     void OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
 
+	UFUNCTION(Server, Reliable)
+	void Server_OnBoxClicked();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UBoxComponent* BoxComp;
 

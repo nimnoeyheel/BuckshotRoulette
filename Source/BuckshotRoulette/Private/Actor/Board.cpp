@@ -10,6 +10,9 @@
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "Actor/ItemBox.h"
+#include "Player/BRPlayerState.h"
+#include "EngineUtils.h"
+#include "Game/BRGameMode.h"
 
 // Sets default values
 ABoard::ABoard()
@@ -50,9 +53,9 @@ ABoard::ABoard()
 		FVector(40.f, -80.f, 10.f),
 		FVector(40.f, -40.f, 10.f),
 		FVector(80.f,  40.f, 10.f),
-		FVector(80.f,  40.f, 10.f),
+		FVector(80.f,  80.f, 10.f),
 		FVector(40.f,  40.f, 10.f),
-		FVector(40.f,  40.f, 10.f),
+		FVector(40.f,  80.f, 10.f),
 
 		// 클라 슬롯
 		FVector(-40.f, -80.f, 10.f),
@@ -111,48 +114,50 @@ AActor* ABoard::GetShotgunActor() const
 	return ShotgunChild ? ShotgunChild->GetChildActor() : nullptr;
 }
 
-#include "EngineUtils.h" // Ensure this include is present for TActorIterator
-
 void ABoard::OnSlotClicked(class USlotComponent* Slot, int32 SlotIdx, APlayerController* RequestingPlayer)
 {
-   if (!Slot || Slot->bHasItem) return;
-   if (!SlotOwners.IsValidIndex(SlotIdx)) return;
-   if (!RequestingPlayer || !RequestingPlayer->PlayerState) return;
+	if (!Slot || Slot->bHasItem) return;
+	if (!SlotOwners.IsValidIndex(SlotIdx)) return;
+	if (!RequestingPlayer || !RequestingPlayer->PlayerState) return;
 
-   // 내 슬롯 소유자인지 체크
-   if (SlotOwners[SlotIdx] != RequestingPlayer->PlayerState) return;
-   if (!PendingItems.Contains(RequestingPlayer)) return;
+	// 내 슬롯 소유자인지 체크
+	if (SlotOwners[SlotIdx] != RequestingPlayer->PlayerState) return;
+	if (!PendingItems.Contains(RequestingPlayer)) return;
 
-   AItem* Item = PendingItems[RequestingPlayer];
-   if (!Item) return;
+	AItem* Item = PendingItems[RequestingPlayer];
+	if (!Item) return;
 
-   // 슬롯에 아이템을 Attach
-   Slot->AttachItem(Item); // 서버에서 실행하면 Replicated 자동 동기화
-   PendingItems.Remove(RequestingPlayer);
+	// 슬롯에 아이템을 Attach
+	Slot->AttachItem(Item); // 서버에서 실행하면 Replicated 자동 동기화
+	PendingItems.Remove(RequestingPlayer);
 
-   // 아이템 모두 배치됐는지 체크 -> 박스 제거 등 로직
-   /*if (bIsLastItem)
-   {
-	   for (TActorIterator<AItemBox> ItemBox(GetWorld()); ItemBox; ++ItemBox)
-	   {
-		   AItemBox* Box = Cast<AItemBox>(*ItemBox);
-		   if (Box->GetOwningPlayer() == RequestingPlayer)
-		   {
-			   Box->Destroy();
-			   bIsLastItem = false;
-		   }
-	   }
-   }*/
+	if (bIsLastItem && !PendingItems.Contains(RequestingPlayer))
+	{
+		for (TActorIterator<AItemBox> It(GetWorld()); It; ++It)
+		{
+			AItemBox* Box = *It;
+			if (Box && Box->GetOwningPlayer() == RequestingPlayer)
+			{
+				Box->Destroy(); // 자신의 박스만 파괴
+				break;
+			}
+		}
+
+		bIsLastItem = false; // 다시 들어오는 것 방지
+	}
 }
 
 void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _bIsLastItem)
 {
 	// 아이템 박스 클릭 시 호출
-	// 서버 FVector(420, 580, 115)
-	// 클라 FVector(575, 580, 115)
-	FVector SpawnLoc;
-	if (ForPlayer->HasAuthority()) SpawnLoc = FVector(420, 580, 115);
-	else SpawnLoc = FVector(575, 580, 115);
+	int32 PlayerIdx = -1;
+	if (ABRPlayerState* PS = Cast<ABRPlayerState>(ForPlayer->PlayerState))
+		PlayerIdx = PS->PlayerIndex;
+
+	// 플레이어 인덱스 기반 위치 분기 (서버=0, 클라=1)
+	FVector SpawnLoc = (PlayerIdx == 1)
+		? FVector(420, 580, 115)
+		: FVector(575, 580, 115);
 
 	FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
 	AItem* Item = GetWorld()->SpawnActor<AItem>(AItem::StaticClass(), SpawnTransform);
@@ -164,7 +169,6 @@ void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _b
 		Item->SetOwningPlayer(ForPlayer);
 		PendingItems.Add(ForPlayer, Item);
 		bIsLastItem = _bIsLastItem;
-		//PendingItem = Item;
 	}
 }
 
