@@ -304,7 +304,10 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			}
 			else if (HasAuthority())
 			{
-				NextTurn();
+				if (!TrySkipOpponentTurn(MyState))
+				{
+					NextTurn();
+				}
 			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
@@ -312,14 +315,21 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			// 내 턴에 나를 쐈다면
 			if (MyState == GS->TurnPlayer)
 			{
-				// 턴 유지
-				UE_LOG(LogTemp, Log, TEXT("%s keep the Turn"), *MyState->GetPlayerName());
+				if (HasAuthority())
+				{
+					if (!TrySkipOpponentTurn(MyState))
+					{
+						NextTurn();
+					}
+				}
 			}
 			// 상대가 나를 쐈다면
 			else if (HasAuthority())
 			{
-				// 턴 전환
-				NextTurn();
+				if (!TrySkipOpponentTurn(OpponentState))
+				{
+					NextTurn();
+				}
 			}
 		}
 	}
@@ -358,7 +368,10 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			}
 			else if (HasAuthority())
 			{
-				NextTurn();
+				if (!TrySkipOpponentTurn(OpponentState))
+				{
+					NextTurn();
+				}
 			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
@@ -368,14 +381,21 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			{
 				if (HasAuthority())
 				{
-					NextTurn();
+					if (!TrySkipOpponentTurn(MyState))
+					{
+						NextTurn();
+					}
 				}
 			}
 			// 상대가 자기 자신을 쐈다면
-			else
+			else if (HasAuthority())
 			{
-				// 턴 유지
-				UE_LOG(LogTemp, Log, TEXT("%s 턴 유지"), *OpponentState->GetPlayerName());
+				if (!TrySkipOpponentTurn(OpponentState))
+				{
+					// 턴 유지
+					NextTurn();
+					UE_LOG(LogTemp, Log, TEXT("%s keep the Turn"), *MyState->GetPlayerName());
+				}
 			}
 		}
 	}
@@ -386,6 +406,20 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 		bIsLastAmmo = false;
 		OnRoundEnd();
 	}
+}
+
+bool ABRPlayerController::TrySkipOpponentTurn(ABRPlayerState* PS)
+{
+	if (PS && PS->ShouldSkipOpponentTurn())
+	{
+		PS->SetSkipOpponentTurn(false); // 사용 후 초기화
+		UE_LOG(LogTemp, Log, TEXT("Handcuff used. Keeping turn for %s."), *PS->GetPlayerName());
+
+		// 상대방 수갑 애님 포커싱 연출
+
+		return true;
+	}
+	return false;
 }
 
 void ABRPlayerController::NextTurn()

@@ -133,7 +133,7 @@ void ABRCharacter::Multicast_TriggerDamageAnim_Implementation()
 		{
 			TriggerDamageAnim();
 		}
-	), 3.f, false);
+	), 2.5f, false);
 }
 
 void ABRCharacter::TriggerDamageAnim()

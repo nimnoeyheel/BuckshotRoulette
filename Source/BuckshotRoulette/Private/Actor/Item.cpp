@@ -15,16 +15,16 @@ AItem::AItem()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// PlaceHolder Mesh
-	PlaceHolderMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceHolderMesh"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshPath(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> MPath(TEXT("/Engine/EditorMaterials/Utilities/LinearColorPicker_MATInst.LinearColorPicker_MATInst"));
-	if (MeshPath.Object)
-	{
-		PlaceHolderMesh->SetStaticMesh(MeshPath.Object);
-		PlaceHolderMesh->SetMaterial(0, MPath.Object);
-		PlaceHolderMesh->SetupAttachment(RootComponent);
-		PlaceHolderMesh->SetRelativeScale3D(FVector(0.2f)); // (X=0.200000,Y=0.200000,Z=0.200000)
-	}
+	//PlaceHolderMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceHolderMesh"));
+	//static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshPath(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+	//static ConstructorHelpers::FObjectFinder<UMaterialInterface> MPath(TEXT("/Engine/EditorMaterials/Utilities/LinearColorPicker_MATInst.LinearColorPicker_MATInst"));
+	//if (MeshPath.Object)
+	//{
+	//	PlaceHolderMesh->SetStaticMesh(MeshPath.Object);
+	//	PlaceHolderMesh->SetMaterial(0, MPath.Object);
+	//	PlaceHolderMesh->SetupAttachment(RootComponent);
+	//	PlaceHolderMesh->SetRelativeScale3D(FVector(0.2f)); // (X=0.200000,Y=0.200000,Z=0.200000)
+	//}
 
 	bReplicates = true;
 }

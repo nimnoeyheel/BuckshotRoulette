@@ -5,20 +5,20 @@
 #include "CoreMinimal.h"
 #include "Actor/Item.h"
 #include "Types/ItemType.h"
-#include "BeerItem.generated.h"
+#include "HandcuffItem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class BUCKSHOTROULETTE_API ABeerItem : public AItem
+class BUCKSHOTROULETTE_API AHandcuffItem : public AItem
 {
 	GENERATED_BODY()
 	
 public:
-	ABeerItem();
-	
-    UFUNCTION()
+	AHandcuffItem();
+
+	UFUNCTION()
     void OnBeginMouseOver(UPrimitiveComponent* TouchedComponent);
     UFUNCTION()
     void OnEndMouseOver(UPrimitiveComponent* TouchedComponent);
@@ -35,11 +35,11 @@ public:
 
 protected:
 	UPROPERTY()
-	EItemType ItemType = EItemType::Beer; 
+	EItemType ItemType = EItemType::Handcuff; 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//class USkeletalMeshComponent* BeerMesh;
-	class UStaticMeshComponent* BeerMesh;
+	//class USkeletalMeshComponent* HandcuffMesh;
+	class UStaticMeshComponent* HandcuffMesh;
 
 	// 오버랩 영역 (상호작용)
 	UPROPERTY(VisibleAnywhere)

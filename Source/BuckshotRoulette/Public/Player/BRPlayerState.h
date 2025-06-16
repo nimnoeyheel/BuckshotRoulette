@@ -40,6 +40,13 @@ public:
 	UPROPERTY(Replicated)
 	int32 MatchWinCount = 0;
 
+// 아이템
+	void SetSkipOpponentTurn(bool b) { bSkipOppenentTurn = b; }
+	bool ShouldSkipOpponentTurn() const { return bSkipOppenentTurn; }
+
+	UPROPERTY(Replicated)
+	bool bSkipOppenentTurn = false;
+
 // WinnerData : 위너 UI만 반영
 	UFUNCTION()
 	void OnRep_TotalCash();

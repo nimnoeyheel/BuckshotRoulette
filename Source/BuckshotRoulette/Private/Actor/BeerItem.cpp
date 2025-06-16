@@ -2,11 +2,10 @@
 
 
 #include "Actor/BeerItem.h"
-#include "Game/BRGameState.h"
-#include "Player/BRPlayerState.h"
-#include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "Player/BRPlayerController.h"
+#include "Player/BRPlayerState.h"
+#include "Game/BRGameState.h"
 #include "UI/MainWidget.h"
 #include "UI/InGameWidget.h"
 #include "Actor/SlotComponent.h"
@@ -43,6 +42,8 @@ ABeerItem::ABeerItem()
 	OverlapBox->OnBeginCursorOver.AddDynamic(this, &ABeerItem::OnBeginMouseOver);
 	OverlapBox->OnEndCursorOver.AddDynamic(this, &ABeerItem::OnEndMouseOver);
 	OverlapBox->OnClicked.AddDynamic(this, &ABeerItem::OnClicked);
+
+	bReplicates = true;
 }
 
 void ABeerItem::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
@@ -103,6 +104,25 @@ void ABeerItem::UseItem()
 		}
 	}
 
+	// 애니메이션/이펙트 알림
+	Multicast_PlayUseEffect();
+
 	// 슬롯에서 아이템 Detach 및 Destroy
 	Super::UseItem();
+}
+
+void ABeerItem::Multicast_PlayUseEffect_Implementation()
+{
+	// 이펙트, 사운드, 애니메이션 실행
+	//UGameplayStatics::PlaySoundAtLocation(this, DrinkSound, GetActorLocation());
+
+	// 캐릭터 애니메이션
+	/*if (OwningPlayer)
+	{
+		APawn* Pawn = OwningPlayer->GetPawn();
+		if (ABRCharacter* Char = Cast<ABRCharacter>(Pawn))
+		{
+			Char->PlayDrinkAnim();
+		}
+	}*/
 }

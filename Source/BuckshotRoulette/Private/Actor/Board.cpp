@@ -14,6 +14,8 @@
 #include "EngineUtils.h"
 #include "Game/BRGameMode.h"
 #include "Actor/BeerItem.h"
+#include "Actor/CigaretteItem.h"
+#include "Actor/HandcuffItem.h"
 
 // Sets default values
 ABoard::ABoard()
@@ -168,12 +170,10 @@ void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _b
 			ItemClass = ABeerItem::StaticClass();
 			break;
 		case EItemType::Cigarette:
-			ItemClass = ABeerItem::StaticClass();
-			//ItemClass = ACigaretteItem::StaticClass();
+			ItemClass = ACigaretteItem::StaticClass();
 			break;
 		case EItemType::Handcuff:
-			ItemClass = ABeerItem::StaticClass();
-			//ItemClass = AHandcuffItem::StaticClass();
+			ItemClass = AHandcuffItem::StaticClass();
 			break;
 		case EItemType::Magnifier:
 			ItemClass = ABeerItem::StaticClass();

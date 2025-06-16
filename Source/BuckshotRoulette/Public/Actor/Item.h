@@ -55,6 +55,6 @@ public:
 	class APlayerController* OwningPlayer = nullptr;
 
 // PlaceHolderMesh
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* PlaceHolderMesh;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	//UStaticMeshComponent* PlaceHolderMesh;
 };

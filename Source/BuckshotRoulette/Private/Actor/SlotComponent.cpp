@@ -28,7 +28,7 @@ void USlotComponent::BeginPlay()
 	{
 		ClickBox->RegisterComponent();
 		ClickBox->AttachToComponent(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		ClickBox->SetBoxExtent(FVector(18, 18, 10));
+		ClickBox->SetBoxExtent(FVector(18, 18, 3));
 		ClickBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		ClickBox->SetCollisionObjectType(ECC_WorldDynamic);
 		ClickBox->SetCollisionResponseToAllChannels(ECR_Ignore);

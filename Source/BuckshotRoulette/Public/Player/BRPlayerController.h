@@ -55,6 +55,9 @@ public:
 
 // 턴, 라운드 변경 함수 타이머
 	UFUNCTION()
+	bool TrySkipOpponentTurn(class ABRPlayerState* PS);
+
+	UFUNCTION()
 	void NextTurn();
 	
 	UFUNCTION()

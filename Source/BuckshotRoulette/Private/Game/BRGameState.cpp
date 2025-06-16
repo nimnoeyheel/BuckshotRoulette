@@ -47,6 +47,7 @@ void ABRGameState::RemoveNextAmmo()
 			default:
 				break;
 		}
+		UE_LOG(LogTemp, Warning, TEXT("========== Before =========="));
 		FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
 	}
@@ -71,6 +72,7 @@ void ABRGameState::RemoveNextAmmo()
 				default:
 					break;
 			}
+			UE_LOG(LogTemp, Warning, TEXT("========== After =========="));
 			FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
 			UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
 		}
