@@ -304,9 +304,21 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			}
 			else if (HasAuthority())
 			{
-				if (!TrySkipOpponentTurn(MyState))
+				// 내 턴에 나를 쐈다면
+				if (MyState == GS->TurnPlayer)
 				{
-					NextTurn();
+					if (HasAuthority())
+					{
+						TrySkipOpponentTurn(MyState);
+					}
+				}
+				// 상대가 나를 쐈다면
+				else if (HasAuthority())
+				{
+					if (!TrySkipOpponentTurn(OpponentState))
+					{
+						NextTurn();
+					}
 				}
 			}
 		}
@@ -317,10 +329,7 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			{
 				if (HasAuthority())
 				{
-					if (!TrySkipOpponentTurn(MyState))
-					{
-						NextTurn();
-					}
+					TrySkipOpponentTurn(MyState);
 				}
 			}
 			// 상대가 나를 쐈다면
@@ -368,9 +377,21 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			}
 			else if (HasAuthority())
 			{
-				if (!TrySkipOpponentTurn(OpponentState))
+				// 내 턴에 나를 쐈다면
+				if (MyState == GS->TurnPlayer)
 				{
-					NextTurn();
+					if (HasAuthority())
+					{
+						TrySkipOpponentTurn(MyState);
+					}
+				}
+				// 상대가 나를 쐈다면
+				else if (HasAuthority())
+				{
+					if (!TrySkipOpponentTurn(OpponentState))
+					{
+						NextTurn();
+					}
 				}
 			}
 		}
@@ -390,12 +411,7 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 			// 상대가 자기 자신을 쐈다면
 			else if (HasAuthority())
 			{
-				if (!TrySkipOpponentTurn(OpponentState))
-				{
-					// 턴 유지
-					NextTurn();
-					UE_LOG(LogTemp, Log, TEXT("%s keep the Turn"), *MyState->GetPlayerName());
-				}
+				TrySkipOpponentTurn(OpponentState);
 			}
 		}
 	}

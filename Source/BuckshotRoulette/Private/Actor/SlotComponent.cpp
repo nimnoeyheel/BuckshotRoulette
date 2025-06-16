@@ -28,7 +28,7 @@ void USlotComponent::BeginPlay()
 	{
 		ClickBox->RegisterComponent();
 		ClickBox->AttachToComponent(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		ClickBox->SetBoxExtent(FVector(18, 18, 3));
+		ClickBox->SetBoxExtent(FVector(55, 35, 12)); //(X=55.000000,Y=35.000000,Z=12.000000)
 		ClickBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		ClickBox->SetCollisionObjectType(ECC_WorldDynamic);
 		ClickBox->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -68,10 +68,12 @@ void USlotComponent::AttachItem(AItem* Item)
 void USlotComponent::DetachItem()
 {
 	if (bHasItem || !AttachedItem) return;
+	bHasItem = false;
 
 	// 아이템을 슬롯에서 Detach
 	AttachedItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	AttachedItem->SetAttachedSlot(nullptr);
+	AttachedItem = nullptr;
 
 	// 서버에서만 Board에 상태 반영
 	if (GetOwnerRole() == ROLE_Authority && BoardOwner)
@@ -82,9 +84,6 @@ void USlotComponent::DetachItem()
 			BoardOwner->SetSlotAttachedItem(SlotIdx, nullptr);
 		}
 	}
-
-	AttachedItem = nullptr;
-	bHasItem = false;
 }
 
 void USlotComponent::OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)

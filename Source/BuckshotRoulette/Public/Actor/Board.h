@@ -37,9 +37,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UChildActorComponent* ShotgunChild;
 
-// Board
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//UStaticMeshComponent* BoardMeshComp;
+// ItemType -> BlueprintClass 매핑
+	UPROPERTY(EditDefaultsOnly, Category="Item")
+	TMap<EItemType, TSubclassOf<class AItem>> ItemBlueprintMap;
 
 // Slot & Item
 	// 슬롯 클릭 이벤트

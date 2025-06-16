@@ -13,9 +13,6 @@
 #include "Player/BRPlayerState.h"
 #include "EngineUtils.h"
 #include "Game/BRGameMode.h"
-#include "Actor/BeerItem.h"
-#include "Actor/CigaretteItem.h"
-#include "Actor/HandcuffItem.h"
 
 // Sets default values
 ABoard::ABoard()
@@ -35,31 +32,31 @@ ABoard::ABoard()
 	ShotgunChild = CreateDefaultSubobject<UChildActorComponent>(TEXT("ShotgunChild"));
 	ShotgunChild->SetChildActorClass(AShotgun::StaticClass());
 	ShotgunChild->SetupAttachment(GunAttachPoint);
-	ShotgunChild->SetRelativeLocation(FVector(-30, 0, 0)); // (X=-30.000000,Y=7.000000,Z=0.000000)
+	ShotgunChild->SetRelativeLocation(FVector(-30, -5, 0)); // (X=-30.000000,Y=-5.000000,Z=0.000000)
 	ShotgunChild->SetRelativeRotation(FRotator(0, 0, -90)); // (Pitch=0.000000,Yaw=0.000000,Roll=-90.000000)
 
 	// Slot
 	static const FVector SlotPositions[16] =
 	{
 		// 서버 슬롯
-		FVector(80.f, -80.f, 20.f),
-		FVector(80.f, -40.f, 20.f),
-		FVector(40.f, -80.f, 20.f),
-		FVector(40.f, -40.f, 20.f),
-		FVector(80.f,  40.f, 20.f),
-		FVector(80.f,  80.f, 20.f),
-		FVector(40.f,  40.f, 20.f),
-		FVector(40.f,  80.f, 20.f),
+		FVector(230.f, -225.f, 70.f),
+		FVector(230.f, -145.f, 70.f),
+		FVector(110.f, -225.f, 70.f),
+		FVector(110.f, -145.f, 70.f),
+		FVector(230.f, 145.f, 70.f),
+		FVector(230.f, 225.f, 70.f),
+		FVector(110.f, 145.f, 70.f),
+		FVector(110.f, 225.f, 70.f),
 
 		// 클라 슬롯
-		FVector(-40.f, -80.f, 20.f),
-		FVector(-40.f, -40.f, 20.f),
-		FVector(-80.f, -80.f, 20.f),
-		FVector(-80.f, -40.f, 20.f),
-		FVector(-40.f,  40.f, 20.f),
-		FVector(-40.f,  80.f, 20.f),
-		FVector(-80.f,  40.f, 20.f),
-		FVector(-80.f,  80.f, 20.f)
+		FVector(-110.f, -145.f, 70.f),
+		FVector(-110.f, -225.f, 70.f),
+		FVector(-230.f, -225.f, 70.f),
+		FVector(-230.f, -145.f, 70.f),
+		FVector(-110.f, 145.f, 70.f),
+		FVector(-110.f, 225.f, 70.f),
+		FVector(-230.f, 145.f, 70.f),
+		FVector(-230.f, 225.f, 70.f)
 	};
 
 	for (int i = 0; i < 16; ++i)
@@ -150,32 +147,19 @@ void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _b
 
 	// 플레이어 인덱스 기반 위치 분기 (서버=0, 클라=1)
 	FVector SpawnLoc = (PlayerIdx == 1)
-		? FVector(750, 10, 250)		// 서버 (X=750.000000,Y=10.000000,Z=250.000000)
-		: FVector(220, 15, 250);	// 클라 (X=220.000000,Y=15.000000,Z=250.000000)
+		? FVector(750, 10, 260)		// 서버 (X=750.000000,Y=10.000000,Z=250.000000)
+		: FVector(220, 15, 260);	// 클라 (X=220.000000,Y=15.000000,Z=250.000000)
 	FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
 
 	TSubclassOf<AItem> ItemClass = AItem::StaticClass();
-	switch (ItemType)
+	if (ItemBlueprintMap.Contains(ItemType))
 	{
-		case EItemType::Beer:
-			ItemClass = ABeerItem::StaticClass();
-			break;
-		case EItemType::Cigarette:
-			ItemClass = ACigaretteItem::StaticClass();
-			break;
-		case EItemType::Handcuff:
-			ItemClass = AHandcuffItem::StaticClass();
-			break;
-		case EItemType::Magnifier:
-			ItemClass = ABeerItem::StaticClass();
-			//ItemClass = AMagnifierItem::StaticClass();
-			break;
-		case EItemType::Knife:
-			ItemClass = ABeerItem::StaticClass();
-			//ItemClass = AKnifeItem::StaticClass();
-			break;
-		default:
-			break;
+		ItemClass = ItemBlueprintMap[ItemType];
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No ItemClass found for %d"), (int32)ItemType);
+		return;
 	}
 
 	AItem* Item = GetWorld()->SpawnActor<AItem>(ItemClass, SpawnTransform);

@@ -18,7 +18,7 @@ AItemBox::AItemBox()
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	RootComponent = BoxComp;
 
-	BoxComp->SetBoxExtent(FVector(45, 50, 25)); //(X=45.000000,Y=50.000000,Z=25.000000)
+	BoxComp->SetBoxExtent(FVector(45, 50, 40)); //(X=45.000000,Y=50.000000,Z=40.000000)
 	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	BoxComp->SetCollisionObjectType(ECC_WorldDynamic);
 	BoxComp->SetCollisionResponseToAllChannels(ECR_Ignore);

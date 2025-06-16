@@ -15,7 +15,7 @@ ABRCharacter::ABRCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	RootComponent->SetRelativeScale3D(FVector(2.5));
+	RootComponent->SetRelativeScale3D(FVector(3));
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshPath(TEXT("/Game/MANIACS/ManiacKiller/Mesh/Maniac4/SK_maniac_killer_4.SK_maniac_killer_4"));
 	if (MeshPath.Object)

@@ -24,7 +24,7 @@ ABeerItem::ABeerItem()
 	OverlapBox->SetGenerateOverlapEvents(true);
 
 	BeerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BeerMesh"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> BeerMeshAsset(TEXT("/Game/BuckShotRoulette/Blueprints/Items/SM_Redbull.SM_Redbull"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> BeerMeshAsset(TEXT("/Game/BuckShotRoulette/Blueprints/Items/Mesh/SM_Redbull.SM_Redbull"));
 	if (BeerMeshAsset.Object)
 	{
 		BeerMesh->SetStaticMesh(BeerMeshAsset.Object);

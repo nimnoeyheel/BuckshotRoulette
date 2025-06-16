@@ -33,9 +33,10 @@ void ABRGameState::Multicast_FireResult_Implementation(int32 FiringPlayerIndex, 
 void ABRGameState::RemoveNextAmmo()
 {
 	// 삭제 전 로그출력
+	FString AmmoTypeName;
+
 	for (int i = 0; i < AmmoSequence.Num(); ++i)
 	{
-		FString AmmoTypeName;
 		switch (AmmoSequence[i])
 		{
 			case EAmmoType::Live:
@@ -47,20 +48,25 @@ void ABRGameState::RemoveNextAmmo()
 			default:
 				break;
 		}
+
 		UE_LOG(LogTemp, Warning, TEXT("========== Before =========="));
 		FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
 	}
 
+	FString msg2 = FString::Printf(TEXT("Current - AmmoSequence[%d]"), CurrentAmmoIndex);
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *msg2);
+
 	if (AmmoSequence.IsValidIndex(CurrentAmmoIndex))
 	{
-		AmmoSequence.RemoveAt(CurrentAmmoIndex);
-		CurrentAmmoIndex = FMath::Clamp(CurrentAmmoIndex, 0, AmmoSequence.Num() - 1);
+		//AmmoSequence.RemoveAt(CurrentAmmoIndex);
+		//CurrentAmmoIndex = FMath::Clamp(CurrentAmmoIndex, 0, AmmoSequence.Num() - 1);
+
+		++CurrentAmmoIndex;
 
 		// 삭제 후 로그출력
 		for (int i = 0; i < AmmoSequence.Num(); ++i)
 		{
-			FString AmmoTypeName;
 			switch (AmmoSequence[i])
 			{
 				case EAmmoType::Live:
@@ -72,10 +78,14 @@ void ABRGameState::RemoveNextAmmo()
 				default:
 					break;
 			}
+
 			UE_LOG(LogTemp, Warning, TEXT("========== After =========="));
-			FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
+			FString msg3 = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *msg3);
 		}
+
+		FString msg4 = FString::Printf(TEXT("Current - AmmoSequence[%d]"), CurrentAmmoIndex);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg4);
 	}
 }
 
