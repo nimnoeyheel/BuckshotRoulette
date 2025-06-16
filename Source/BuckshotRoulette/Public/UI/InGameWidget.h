@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Types/ItemType.h"
 #include "InGameWidget.generated.h"
 
 /**
@@ -102,5 +103,9 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UOverlay* Overlay_TargetSelect;
+
+// 아이템
+	UFUNCTION()
+	void ShowItemsRuleSubtitle(EItemType ItemType);
 
 };

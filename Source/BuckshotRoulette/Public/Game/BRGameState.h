@@ -43,6 +43,10 @@ public:
 	int32 CurrentAmmoIndex = 0;
 #pragma endregion
 
+// 아이템
+	void RemoveNextAmmo();
+
+
 #pragma region InGameUI 반영을 위한 데이터 동기화
 	// UI 업데이트를 위한 OnRep_함수
 	UFUNCTION()
