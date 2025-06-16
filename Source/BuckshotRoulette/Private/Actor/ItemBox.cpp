@@ -18,7 +18,7 @@ AItemBox::AItemBox()
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	RootComponent = BoxComp;
 
-	BoxComp->SetBoxExtent(FVector(15));
+	BoxComp->SetBoxExtent(FVector(45, 50, 25)); //(X=45.000000,Y=50.000000,Z=25.000000)
 	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	BoxComp->SetCollisionObjectType(ECC_WorldDynamic);
 	BoxComp->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -26,14 +26,14 @@ AItemBox::AItemBox()
 
 	// 아이템박스 외형
 	ItemBoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemBoxMesh"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> ItemBoxMeshPath (TEXT("/Engine/BasicShapes/Cube.Cube"));
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> MPath(TEXT("/Engine/VREditor/Teleport/TeleportDirectionMaterial.TeleportDirectionMaterial"));
-	if (ItemBoxMeshPath.Succeeded() && MPath.Succeeded())
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> ItemBoxMeshPath (TEXT("/Game/MS_MilitaryEquipment/3D_Assets/Military_Wooden_Crate_00/ud4nfhofa_LOD0.ud4nfhofa_LOD0"));
+	if (ItemBoxMeshPath.Succeeded())
 	{
 		ItemBoxMesh->SetStaticMesh(ItemBoxMeshPath.Object);
-		ItemBoxMesh->SetMaterial(0, MPath.Object);
 		ItemBoxMesh->SetupAttachment(RootComponent);
-		ItemBoxMesh->SetRelativeScale3D(FVector(0.25));
+		ItemBoxMesh->SetRelativeLocation(FVector(0, 0, -6));
+		ItemBoxMesh->SetRelativeRotation(FRotator(0, -90, 0)); // (Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)
+		ItemBoxMesh->SetRelativeScale3D(FVector(3));
 	}
 
 	bReplicates = true;

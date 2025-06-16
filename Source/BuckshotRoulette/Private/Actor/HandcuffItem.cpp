@@ -10,30 +10,32 @@
 
 AHandcuffItem::AHandcuffItem()
 {
-	HandcuffMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HandcuffMesh"));
-	RootComponent = HandcuffMesh;
-
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> HandcuffMeshAsset(TEXT("/Game/Police/Meshes/SM_Police_Handcuffs_00.SM_Police_Handcuffs_00"));
-	if (HandcuffMeshAsset.Object)
-	{
-		//HandcuffMesh->SetSkeletalMesh(HandcuffMeshAsset.Object);
-		HandcuffMesh->SetStaticMesh(HandcuffMeshAsset.Object);
-	}
-
-	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
-	if (AnimPath.Class)
-	{
-		HandcuffMesh->SetAnimInstanceClass(AnimPath.Class);
-	}*/
-
 	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
-	OverlapBox->SetupAttachment(RootComponent);
-	OverlapBox->SetRelativeScale3D(FVector(0.5, 0.3, 0.3)); // (X=0.500000,Y=0.300000,Z=0.300000)
+	RootComponent = OverlapBox;
+
+	OverlapBox->SetBoxExtent(FVector(55, 40, 20)); // (X=55.000000,Y=40.000000,Z=20.000000)
 	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
 	OverlapBox->SetCollisionResponseToAllChannels(ECR_Ignore);
 	OverlapBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	OverlapBox->SetGenerateOverlapEvents(true);
+
+	HandcuffMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HandcuffMesh"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> HandcuffMeshAsset(TEXT("/Game/KJM/Asset/Item/Retopo_Handcuffs.Retopo_Handcuffs"));
+	if (HandcuffMeshAsset.Object)
+	{
+		HandcuffMesh->SetStaticMesh(HandcuffMeshAsset.Object);
+		HandcuffMesh->SetupAttachment(RootComponent);
+		HandcuffMesh->SetRelativeLocation(FVector(38, 13, 2)); // (X=38.000000,Y=13.000000,Z=2.000000)
+		HandcuffMesh->SetRelativeRotation(FRotator(90, 0, 0)); // (Pitch=90.000000,Yaw=0.000000,Roll=0.000000)
+	}
+
+	//RootComponent = HandcuffMesh;
+	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
+	if (AnimPath.Class)
+	{
+		HandcuffMesh->SetAnimInstanceClass(AnimPath.Class);
+	}*/
 
 	// 이벤트 바인딩
 	OverlapBox->OnBeginCursorOver.AddDynamic(this, &AHandcuffItem::OnBeginMouseOver);
@@ -50,7 +52,7 @@ void AHandcuffItem::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
-	HandcuffMesh->SetWorldLocation(Loc);
+	OverlapBox->SetWorldLocation(Loc);
 
 	PC->MainUI->InGameUI->ShowItemsRuleSubtitle(ItemType);
 }
@@ -62,7 +64,7 @@ void AHandcuffItem::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
-	HandcuffMesh->SetWorldLocation(Loc);
+	OverlapBox->SetWorldLocation(Loc);
 
 	PC->MainUI->InGameUI->SetVisibleSubtitle(false);
 }

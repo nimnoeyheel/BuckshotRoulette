@@ -173,8 +173,8 @@ void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
 			PCs.Add(PC);
 
 			FVector SpawnLoc;
-			if (PCs.Num() == 1) SpawnLoc = FVector(420, 580, 90);	// 서버
-			else SpawnLoc = FVector(575, 580, 90);					// 클라
+			if (PCs.Num() == 1) SpawnLoc = FVector(750, 10, 225);	// 서버 (X=750.000000,Y=10.000000,Z=225.000000)
+			else SpawnLoc = FVector(220, 10, 225);					// 클라 (X=220.000000,Y=10.000000,Z=225.000000)
 			FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
 
 			FActorSpawnParameters Params;

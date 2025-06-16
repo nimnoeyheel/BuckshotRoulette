@@ -38,8 +38,8 @@ public:
 	UChildActorComponent* ShotgunChild;
 
 // Board
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* BoardMeshComp;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	//UStaticMeshComponent* BoardMeshComp;
 
 // Slot & Item
 	// 슬롯 클릭 이벤트

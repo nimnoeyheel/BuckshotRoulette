@@ -11,16 +11,16 @@
 
 ACigaretteItem::ACigaretteItem()
 {
-	CigaretteMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CigaretteMesh"));
-	RootComponent = CigaretteMesh;
+	//CigaretteMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CigaretteMesh"));
+	//RootComponent = CigaretteMesh;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> CigaretteMeshAsset(TEXT("/Engine/BasicShapes/Cube.Cube"));
-	if (CigaretteMeshAsset.Object)
-	{
-		//CigaretteMesh->SetSkeletalMesh(CigaretteMeshAsset.Object);
-		CigaretteMesh->SetStaticMesh(CigaretteMeshAsset.Object);
-		CigaretteMesh->SetRelativeScale3D(FVector(0.15, 0.2, 0.05));
-	}
+	//static ConstructorHelpers::FObjectFinder<UStaticMesh> CigaretteMeshAsset(TEXT("/Game/KJM/Asset/Item/Retopo_Close_Cigarette_Down.Retopo_Close_Cigarette_Down"));
+	//if (CigaretteMeshAsset.Object)
+	//{
+	//	//CigaretteMesh->SetSkeletalMesh(CigaretteMeshAsset.Object);
+	//	CigaretteMesh->SetStaticMesh(CigaretteMeshAsset.Object);
+	//	CigaretteMesh->SetRelativeScale3D(FVector(0.15, 0.2, 0.05));
+	//}
 
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
 	if (AnimPath.Class)
@@ -29,8 +29,8 @@ ACigaretteItem::ACigaretteItem()
 	}*/
 
 	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
-	OverlapBox->SetupAttachment(RootComponent);
-	OverlapBox->SetRelativeScale3D(FVector(2, 2, 3)); // (X=1.750000,Y=1.750000,Z=2.000000)
+	RootComponent = OverlapBox;
+	OverlapBox->SetBoxExtent(FVector(30, 40, 25)); // (X=30.000000,Y=40.000000,Z=25.000000)
 	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
 	OverlapBox->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -52,7 +52,7 @@ void ACigaretteItem::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
-	CigaretteMesh->SetWorldLocation(Loc);
+	OverlapBox->SetWorldLocation(Loc);
 
 	PC->MainUI->InGameUI->ShowItemsRuleSubtitle(ItemType);
 }
@@ -64,7 +64,7 @@ void ACigaretteItem::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
-	CigaretteMesh->SetWorldLocation(Loc);
+	OverlapBox->SetWorldLocation(Loc);
 
 	PC->MainUI->InGameUI->SetVisibleSubtitle(false);
 }

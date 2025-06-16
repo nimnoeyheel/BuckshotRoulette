@@ -26,20 +26,11 @@ ABoard::ABoard()
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = Root;
 
-	// Board Mesh
-	BoardMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoardMeshComp"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> BoardPath(TEXT("/Engine/BasicShapes/Cube.Cube"));
-	if (BoardPath.Object)
-	{
-		BoardMeshComp->SetStaticMesh(BoardPath.Object);
-		BoardMeshComp->SetupAttachment(RootComponent);
-		BoardMeshComp->SetRelativeScale3D(FVector(2, 2, 0.1f)); // (X=2.000000,Y=2.000000,Z=0.100000)
-	}
-
 	// ShotGun
 	GunAttachPoint = CreateDefaultSubobject<USceneComponent>(TEXT("GunAttachPoint"));
 	GunAttachPoint->SetupAttachment(RootComponent);
-	GunAttachPoint->SetRelativeLocation(FVector(0, 0, 10)); // (X=0.000000,Y=0.000000,Z=10.000000)
+	GunAttachPoint->SetRelativeLocation(FVector(0, 20, 70)); // (X=0.000000,Y=20.000000,Z=70.000000)
+	GunAttachPoint->SetRelativeScale3D(FVector(3.5));
 
 	ShotgunChild = CreateDefaultSubobject<UChildActorComponent>(TEXT("ShotgunChild"));
 	ShotgunChild->SetChildActorClass(AShotgun::StaticClass());
@@ -51,24 +42,24 @@ ABoard::ABoard()
 	static const FVector SlotPositions[16] =
 	{
 		// 서버 슬롯
-		FVector(80.f, -80.f, 10.f),
-		FVector(80.f, -40.f, 10.f),
-		FVector(40.f, -80.f, 10.f),
-		FVector(40.f, -40.f, 10.f),
-		FVector(80.f,  40.f, 10.f),
-		FVector(80.f,  80.f, 10.f),
-		FVector(40.f,  40.f, 10.f),
-		FVector(40.f,  80.f, 10.f),
+		FVector(80.f, -80.f, 20.f),
+		FVector(80.f, -40.f, 20.f),
+		FVector(40.f, -80.f, 20.f),
+		FVector(40.f, -40.f, 20.f),
+		FVector(80.f,  40.f, 20.f),
+		FVector(80.f,  80.f, 20.f),
+		FVector(40.f,  40.f, 20.f),
+		FVector(40.f,  80.f, 20.f),
 
 		// 클라 슬롯
-		FVector(-40.f, -80.f, 10.f),
-		FVector(-40.f, -40.f, 10.f),
-		FVector(-80.f, -80.f, 10.f),
-		FVector(-80.f, -40.f, 10.f),
-		FVector(-40.f,  40.f, 10.f),
-		FVector(-40.f,  80.f, 10.f),
-		FVector(-80.f,  40.f, 10.f),
-		FVector(-80.f,  80.f, 10.f)
+		FVector(-40.f, -80.f, 20.f),
+		FVector(-40.f, -40.f, 20.f),
+		FVector(-80.f, -80.f, 20.f),
+		FVector(-80.f, -40.f, 20.f),
+		FVector(-40.f,  40.f, 20.f),
+		FVector(-40.f,  80.f, 20.f),
+		FVector(-80.f,  40.f, 20.f),
+		FVector(-80.f,  80.f, 20.f)
 	};
 
 	for (int i = 0; i < 16; ++i)
@@ -159,8 +150,8 @@ void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _b
 
 	// 플레이어 인덱스 기반 위치 분기 (서버=0, 클라=1)
 	FVector SpawnLoc = (PlayerIdx == 1)
-		? FVector(420, 580, 115)
-		: FVector(575, 580, 115);
+		? FVector(750, 10, 250)		// 서버 (X=750.000000,Y=10.000000,Z=250.000000)
+		: FVector(220, 15, 250);	// 클라 (X=220.000000,Y=15.000000,Z=250.000000)
 	FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
 
 	TSubclassOf<AItem> ItemClass = AItem::StaticClass();

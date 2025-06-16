@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "Actor/Item.h"
 #include "Types/ItemType.h"
-#include "CigaretteItem.generated.h"
+#include "KnifeItem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class BUCKSHOTROULETTE_API ACigaretteItem : public AItem
+class BUCKSHOTROULETTE_API AKnifeItem : public AItem
 {
 	GENERATED_BODY()
 	
 public:
-	ACigaretteItem();
+	AKnifeItem();
 
 	UFUNCTION()
     void OnBeginMouseOver(UPrimitiveComponent* TouchedComponent);
@@ -35,14 +35,9 @@ public:
 
 protected:
 	UPROPERTY()
-	EItemType ItemType = EItemType::Cigarette; 
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//class USkeletalMeshComponent* CigaretteMesh;
-	//class UStaticMeshComponent* CigaretteMesh;
+	EItemType ItemType = EItemType::Knife; 
 
 	// 오버랩 영역 (상호작용)
 	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* OverlapBox;
-
 };

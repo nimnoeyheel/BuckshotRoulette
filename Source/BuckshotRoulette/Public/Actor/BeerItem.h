@@ -38,7 +38,6 @@ protected:
 	EItemType ItemType = EItemType::Beer; 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//class USkeletalMeshComponent* BeerMesh;
 	class UStaticMeshComponent* BeerMesh;
 
 	// 오버랩 영역 (상호작용)

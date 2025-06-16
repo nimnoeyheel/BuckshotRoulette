@@ -12,15 +12,24 @@
 
 ABeerItem::ABeerItem()
 {
-	BeerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BeerMesh"));
-	RootComponent = BeerMesh;
+	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
+	RootComponent = OverlapBox;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> BeerMeshAsset(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+	OverlapBox->SetBoxExtent(FVector(2.5, 2.5, 5));
+	OverlapBox->SetRelativeScale3D(FVector(7));
+	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
+	OverlapBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+	OverlapBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	OverlapBox->SetGenerateOverlapEvents(true);
+
+	BeerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BeerMesh"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> BeerMeshAsset(TEXT("/Game/BuckShotRoulette/Blueprints/Items/SM_Redbull.SM_Redbull"));
 	if (BeerMeshAsset.Object)
 	{
-		//BeerMesh->SetSkeletalMesh(BeerMeshAsset.Object);
 		BeerMesh->SetStaticMesh(BeerMeshAsset.Object);
-		BeerMesh->SetRelativeScale3D(FVector(0.2));
+		BeerMesh->SetupAttachment(RootComponent);
+		BeerMesh->SetRelativeLocation(FVector(0, 3.5, -4.5)); // (X=0.000000,Y=3.500000,Z=-4.500000)
 	}
 
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
@@ -28,15 +37,6 @@ ABeerItem::ABeerItem()
 	{
 		BeerMesh->SetAnimInstanceClass(AnimPath.Class);
 	}*/
-
-	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
-	OverlapBox->SetupAttachment(RootComponent);
-	OverlapBox->SetRelativeScale3D(FVector(1.5, 1.5, 2)); // (X=1.500000,Y=1.500000,Z=2.000000)
-	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
-	OverlapBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-	OverlapBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	OverlapBox->SetGenerateOverlapEvents(true);
 
 	// 이벤트 바인딩
 	OverlapBox->OnBeginCursorOver.AddDynamic(this, &ABeerItem::OnBeginMouseOver);
@@ -53,7 +53,7 @@ void ABeerItem::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
-	BeerMesh->SetWorldLocation(Loc);
+	OverlapBox->SetWorldLocation(Loc);
 	
 	PC->MainUI->InGameUI->ShowItemsRuleSubtitle(ItemType);
 }
@@ -65,7 +65,7 @@ void ABeerItem::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
-	BeerMesh->SetWorldLocation(Loc);
+	OverlapBox->SetWorldLocation(Loc);
 	
 	PC->MainUI->InGameUI->SetVisibleSubtitle(false);
 }
