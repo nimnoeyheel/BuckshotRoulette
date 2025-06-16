@@ -1,14 +1,38 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Character/BRCharacter.h"
 #include "Player/BRPlayerState.h"
+#include "Camera/CameraComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "Actor/Board.h"
+#include "Actor/Shotgun.h"
+#include "EngineUtils.h"
 
 // Sets default values
 ABRCharacter::ABRCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshPath(TEXT("/Game/MANIACS/ManiacKiller/Mesh/Maniac4/SK_maniac_killer_4.SK_maniac_killer_4"));
+	if (MeshPath.Object)
+	{
+		GetMesh()->SetSkeletalMesh(MeshPath.Object);
+		GetMesh()->SetRelativeLocation(FVector(0, 0, -90)); //(X=0.000000,Y=0.000000,Z=-90.000000)
+		GetMesh()->SetRelativeRotation(FRotator(0, -90, 0)); //(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)
+	}
+
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT("/Game/BuckShotRoulette/Blueprints/Character/ABP_Player.ABP_Player_C"));
+	if (AnimPath.Class)
+	{
+		GetMesh()->SetAnimInstanceClass(AnimPath.Class);
+	}
+
+	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	CameraComp->SetupAttachment(RootComponent);
+	CameraComp->SetRelativeLocation(FVector(30, 0, 58)); // (X=30.000000,Y=0.000000,Z=58.000000)
+	CameraComp->SetRelativeRotation(FRotator(-26, 0, 0)); // (Pitch=-26.000000,Yaw=0.000000,Roll=0.000000)
 
 }
 
@@ -22,6 +46,19 @@ void ABRCharacter::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("PlayerName: %s"), *PS->GetPlayerName());
 	}
 
+	// 월드에 존재하는 ABoard 인스턴스를 찾기
+	for (TActorIterator<ABoard> It(GetWorld()); It; ++It)
+	{
+		BoardActor = *It;
+		break;
+	}
+
+	// 월드에 존재하는 AShotgun 인스턴스를 찾기
+	for (TActorIterator<AShotgun> It(GetWorld()); It; ++It)
+	{
+		ShotgunActor = *It;
+		break;
+	}
 }
 
 // Called every frame
@@ -38,3 +75,102 @@ void ABRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
+void ABRCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ABRCharacter, PlayerAnimState);
+}
+
+AShotgun* ABRCharacter::GetShotgunActor() const
+{
+	return ShotgunActor ? ShotgunActor : nullptr;
+}
+
+void ABRCharacter::AttachShotgunToHand()
+{
+	if (BoardActor && BoardActor->GetShotgunActor())
+	{
+		BoardActor->GetShotgunActor()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		BoardActor->GetShotgunActor()->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "shotgun_Socket");
+	}
+}
+
+void ABRCharacter::AttachShotgunToBoard()
+{
+	if (BoardActor && BoardActor->GetShotgunActor())
+	{
+		BoardActor->GetShotgunActor()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		BoardActor->GetShotgunActor()->AttachToComponent(BoardActor->ShotgunChild, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	}
+}
+
+void ABRCharacter::Multicast_TriggerAttackAnim_Implementation()
+{
+	AttachShotgunToHand();
+	TriggerAttackAnim();
+}
+
+void ABRCharacter::TriggerAttackAnim()
+{
+	PlayerAnimState = EPlayerAnimState::Attack;
+
+	// 2.5초 뒤 (FireAnim Sec)
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			PlayerAnimState = EPlayerAnimState::Idle;
+			AttachShotgunToBoard();
+		}
+	), 2.5f, false);
+}
+
+void ABRCharacter::Multicast_TriggerDamageAnim_Implementation()
+{
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			TriggerDamageAnim();
+		}
+	), 3.f, false);
+}
+
+void ABRCharacter::TriggerDamageAnim()
+{
+	PlayerAnimState = EPlayerAnimState::Damage;
+
+	// (DamageAnim Sec)
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			PlayerAnimState = EPlayerAnimState::Idle;
+		}
+	), 3.f, false);
+}
+
+void ABRCharacter::Multicast_TriggerDeathAnim_Implementation()
+{
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			TriggerDeathAnim();
+		}
+	), 2.55f, false);
+}
+
+void ABRCharacter::TriggerDeathAnim()
+{
+	PlayerAnimState = EPlayerAnimState::Death;
+
+	// 1.96초 뒤 (DeathAnim Sec)
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,
+		FTimerDelegate::CreateLambda([&]()
+		{
+			PlayerAnimState = EPlayerAnimState::Idle;
+		}
+	), 1.96f, false);
+}

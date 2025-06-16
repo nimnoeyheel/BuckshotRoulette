@@ -4,8 +4,10 @@
 #include "Player/BRPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "Game/BRGameMode.h"
+#include "Player/BRPlayerController.h"
+#include "Game/BRGameState.h"
 
-void ABRPlayerState::ServerRPCSetPlayerName_Implementation(const FString& NewName)
+void ABRPlayerState::ServerRPC_SetPlayerName_Implementation(const FString& NewName)
 {
 	SetPlayerName(NewName);
 	bNicknameEntered = true;
@@ -21,7 +23,7 @@ void ABRPlayerState::ServerRPCSetPlayerName_Implementation(const FString& NewNam
 	}
 }
 
-bool ABRPlayerState::ServerRPCSetPlayerName_Validate(const FString& NewName)
+bool ABRPlayerState::ServerRPC_SetPlayerName_Validate(const FString& NewName)
 {
 	return true;
 }
@@ -29,12 +31,36 @@ bool ABRPlayerState::ServerRPCSetPlayerName_Validate(const FString& NewName)
 void ABRPlayerState::OnRep_PlayerName()
 {
 	Super::OnRep_PlayerName();
-	UE_LOG(LogTemp, Log, TEXT("[CLIENT%d] Nickname: %s"), PlayerIndex , *GetPlayerName());
-	// UI 업데이트
+
+}
+
+void ABRPlayerState::OnRep_Hp()
+{
+	// 모든 PlayerController에 알림 (각자 자기 화면에만 반영)
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
+		if (PC && PC->IsLocalController())
+		{
+			PC->OnUpdateHp();
+		}
+	}
+}
+
+void ABRPlayerState::OnRep_TotalCash()
+{
+
 }
 
 void ABRPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABRPlayerState, PlayerIndex);
+	DOREPLIFETIME(ABRPlayerState, Hp);
+	DOREPLIFETIME(ABRPlayerState, MatchWinCount);
+	DOREPLIFETIME(ABRPlayerState, ShotsFired);
+	DOREPLIFETIME(ABRPlayerState, ShellsEjected);
+	DOREPLIFETIME(ABRPlayerState, CigarettesSmoked);
+	DOREPLIFETIME(ABRPlayerState, MLOfBeerDrank);
+	DOREPLIFETIME(ABRPlayerState, TotalCash);
 }

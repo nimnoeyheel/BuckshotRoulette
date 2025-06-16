@@ -1,8 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Types/AmmoType.h"
 #include "GameFramework/PlayerController.h"
 #include "BRPlayerController.generated.h"
 
@@ -19,8 +20,54 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;
+
+public:
+// 턴 시스템
+	bool IsMyTurn();
+
+	void SetInputEnable(bool bEnable);
+
+	UFUNCTION()
+	void OnTurnPlayerChanged();
+
+// 플레이어 닉네임 UI 업데이트
+	//UFUNCTION()
+	//void OnUpdateNickname();
+
+// 새로운 라운드 정보 업데이트
+	UFUNCTION()
+	void OnUpdateNewRound();
+
+// 플레이어 HP 업데이트
+	UFUNCTION()
+	void OnUpdateHp();
+
+// 발사 시스템
+	UFUNCTION()
+	void OnTargetSelected(int32 TargetPlayerIndex);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_RequestFire(int32 TargetPlayerIndex);
+
+	UFUNCTION()
+	void OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
+
+// 턴, 라운드 변경 함수 타이머
+	UFUNCTION()
+	void NextTurn();
+	
+	UFUNCTION()
+	void OnRoundEnd();
+
+// 게임 종료
+	UFUNCTION()
+	void OnGameOver(class ABRPlayerState* Winner);
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<class UNicknameEntryWidget> NicknameEntryWidgetClass;
+	TSubclassOf<class UMainWidget> MainWidgetClass;
+
+	UPROPERTY()
+	class UMainWidget* MainUI;
 };

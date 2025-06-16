@@ -1,10 +1,19 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "BRCharacter.generated.h"
+
+UENUM(BlueprintType)
+enum class EPlayerAnimState : uint8
+{
+	Idle      UMETA(DisplayName = "Idle"),
+	Attack    UMETA(DisplayName = "Attack"),
+	Damage    UMETA(DisplayName = "Damage"),
+	Death     UMETA(DisplayName = "Death")
+};
 
 UCLASS()
 class BUCKSHOTROULETTE_API ABRCharacter : public ACharacter
@@ -25,5 +34,43 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+public:
+// 총 Attach
+	class AShotgun* GetShotgunActor() const;
+
+	void AttachShotgunToHand();
+	void AttachShotgunToBoard();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
+	class ABoard* BoardActor = nullptr;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Shotgun")
+	class AShotgun* ShotgunActor = nullptr;
+
+// 애니메이션
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TriggerAttackAnim();
+	UFUNCTION()
+	void TriggerAttackAnim();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TriggerDamageAnim();
+	UFUNCTION()
+	void TriggerDamageAnim();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TriggerDeathAnim();
+	UFUNCTION()
+	void TriggerDeathAnim();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category="Anim")
+	EPlayerAnimState PlayerAnimState = EPlayerAnimState::Idle;
+
+// 카메라
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	class UCameraComponent* CameraComp;
 
 };
