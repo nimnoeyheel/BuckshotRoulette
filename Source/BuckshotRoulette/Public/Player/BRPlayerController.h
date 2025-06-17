@@ -55,6 +55,9 @@ public:
 
 // 턴, 라운드 변경 함수 타이머
 	UFUNCTION()
+	bool TrySkipOpponentTurn(class ABRPlayerState* PS);
+
+	UFUNCTION()
 	void NextTurn();
 	
 	UFUNCTION()
@@ -63,6 +66,10 @@ public:
 // 게임 종료
 	UFUNCTION()
 	void OnGameOver(class ABRPlayerState* Winner);
+
+// 아이템 관련
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ClickSlot(class USlotComponent* SlotComp, int32 SlotIdx);
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")

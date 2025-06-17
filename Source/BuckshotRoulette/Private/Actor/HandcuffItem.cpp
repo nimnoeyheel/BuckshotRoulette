@@ -1,0 +1,104 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Actor/HandcuffItem.h"
+#include "Components/BoxComponent.h"
+#include "Player/BRPlayerController.h"
+#include "UI/MainWidget.h"
+#include "UI/InGameWidget.h"
+#include "Player/BRPlayerState.h"
+
+AHandcuffItem::AHandcuffItem()
+{
+	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
+	RootComponent = OverlapBox;
+
+	OverlapBox->SetBoxExtent(FVector(55, 40, 20)); // (X=55.000000,Y=40.000000,Z=20.000000)
+	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
+	OverlapBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+	OverlapBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	OverlapBox->SetGenerateOverlapEvents(true);
+
+	HandcuffMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HandcuffMesh"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> HandcuffMeshAsset(TEXT("/Game/KJM/Asset/Item/Retopo_Handcuffs.Retopo_Handcuffs"));
+	if (HandcuffMeshAsset.Object)
+	{
+		HandcuffMesh->SetStaticMesh(HandcuffMeshAsset.Object);
+		HandcuffMesh->SetupAttachment(RootComponent);
+		HandcuffMesh->SetRelativeLocation(FVector(38, 13, 2)); // (X=38.000000,Y=13.000000,Z=2.000000)
+		HandcuffMesh->SetRelativeRotation(FRotator(90, 0, 0)); // (Pitch=90.000000,Yaw=0.000000,Roll=0.000000)
+	}
+
+	//RootComponent = HandcuffMesh;
+	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
+	if (AnimPath.Class)
+	{
+		HandcuffMesh->SetAnimInstanceClass(AnimPath.Class);
+	}*/
+
+	// 이벤트 바인딩
+	OverlapBox->OnBeginCursorOver.AddDynamic(this, &AHandcuffItem::OnBeginMouseOver);
+	OverlapBox->OnEndCursorOver.AddDynamic(this, &AHandcuffItem::OnEndMouseOver);
+	OverlapBox->OnClicked.AddDynamic(this, &AHandcuffItem::OnClicked);
+
+	bReplicates = true;
+}
+
+void AHandcuffItem::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
+{
+	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
+	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+
+	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
+	OverlapBox->SetWorldLocation(Loc);
+
+	PC->MainUI->InGameUI->ShowItemsRuleSubtitle(ItemType);
+}
+
+void AHandcuffItem::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
+{
+	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
+	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+
+	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
+	OverlapBox->SetWorldLocation(Loc);
+
+	PC->MainUI->InGameUI->SetVisibleSubtitle(false);
+}
+
+void AHandcuffItem::OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
+{
+	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (!PC || !PC->IsMyTurn()) return;
+	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+
+	ServerRPC_UseItem();
+}
+
+void AHandcuffItem::ServerRPC_UseItem_Implementation()
+{
+	UseItem();
+}
+
+void AHandcuffItem::UseItem()
+{
+	if (!HasAuthority()) return;
+
+	ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer->PlayerState);
+	if (PS)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[HANDCUFF] %s skip opponent turn"), *PS->GetPlayerName());
+		PS->SetSkipOpponentTurn(true);
+	}
+
+	Multicast_PlayUseEffect();
+
+	Super::UseItem();
+}
+
+void AHandcuffItem::Multicast_PlayUseEffect_Implementation()
+{
+}

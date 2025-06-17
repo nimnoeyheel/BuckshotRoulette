@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Types/ItemType.h"
 #include "BRGameMode.generated.h"
 
 USTRUCT(BlueprintType)
@@ -44,6 +45,7 @@ public:
 protected:
 	virtual void PostLogin(class APlayerController* NewPlayer) override;
 	virtual void BeginPlay() override;
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
 public:
 
@@ -53,7 +55,10 @@ public:
 
 	// 턴 초기화
 	void PickFirstPlayer();
-	void StartGame();
+	void initializeGame();
+
+	// 라운드 시작
+	void StartRound(int32 MatchIdx, int32 RoundIdx);
 
 	// 턴 플레이어가 액션을 마쳤을 때 서버에서 호출
 	void NextTurn();
@@ -63,6 +68,10 @@ public:
 	
 	// 게임 종료
 	void OnGameOver(class ABRPlayerState* Winner);
+
+	// 마지막 턴 플레이어 저장
+	UPROPERTY()
+	APlayerState* LastTurnPlayer = nullptr;
 #pragma endregion
 
 #pragma region 총알 시스템
@@ -76,6 +85,30 @@ public:
 
 	int32 CurrentMatchIdx = 0;
 	int32 CurrentRoundIdx = 0;
+#pragma endregion
+
+#pragma region 아이템 시스템
+	void SetupItemsForRound(int32 MatchIdx, int32 RoundIdx);
+
+	void InitSlotOwners();
+
+	void SetBoardOwner(class ABoard* InBoard) { BoardActor = InBoard; }
+	class ABoard* GetBoardOwner() const { return BoardActor; }
+
+	UPROPERTY()
+	class ABoard* BoardActor;
+
+	UPROPERTY()
+	class AItemBox* ItemBox;
+
+	UPROPERTY()
+	TArray<EItemType> CurrentRoundItems;
+
+	void NotifyItemBoxDestroyed();
+	void DecideTurnAfterItemSetup();
+
+	UPROPERTY()
+	int32 NumActiveItemBoxes = 0;
 #pragma endregion
 
 };

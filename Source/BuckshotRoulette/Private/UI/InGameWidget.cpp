@@ -117,3 +117,32 @@ void UInGameWidget::OnTargetSelected_Internal(int32 TargetPlayerIndex)
 		PC->OnTargetSelected(TargetPlayerIndex);
 	}
 }
+
+void UInGameWidget::ShowItemsRuleSubtitle(EItemType ItemType)
+{
+	FString Msg;
+	
+	switch (ItemType)
+	{
+		case EItemType::Beer:
+			Msg = FString::Printf(TEXT("You rack the shotgun. ends round on last shell."));
+			break;
+		case EItemType::Cigarette:
+			Msg = FString::Printf(TEXT("Takes the edge off. Regain 1 charge."));
+			break;
+		case EItemType::Handcuff:
+			Msg = FString::Printf(TEXT("Opponent skips the next turn."));
+			break;
+		case EItemType::Magnifier:
+			Msg = FString::Printf(TEXT("Check the current round in the chamber."));
+			break;
+		case EItemType::Knife:
+			Msg = FString::Printf(TEXT("Shotgun deals 2 damage."));
+			break;
+		default:
+			break;
+	}
+
+	Txt_Subtitle->SetText(FText::FromString(Msg));
+	SetVisibleOverlay(Overlay_Subtitle, true);
+}

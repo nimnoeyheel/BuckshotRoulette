@@ -6,6 +6,7 @@
 #include "Player/BRPlayerController.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerState.h"
+#include "Kismet/GameplayStatics.h"
 
 void ABRGameState::SetTurnPlayer(APlayerState* NewTurnPlayer)
 {
@@ -26,6 +27,65 @@ void ABRGameState::Multicast_FireResult_Implementation(int32 FiringPlayerIndex, 
 		{
 			PC->OnFireResult(FiringPlayerIndex, TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
 		}
+	}
+}
+
+void ABRGameState::RemoveNextAmmo()
+{
+	// 삭제 전 로그출력
+	FString AmmoTypeName;
+
+	for (int i = 0; i < AmmoSequence.Num(); ++i)
+	{
+		switch (AmmoSequence[i])
+		{
+			case EAmmoType::Live:
+				AmmoTypeName = TEXT("Live");
+				break;
+			case EAmmoType::Blank:
+				AmmoTypeName = TEXT("Blank");
+				break;
+			default:
+				break;
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("========== Before =========="));
+		FString msg = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
+	}
+
+	FString msg2 = FString::Printf(TEXT("Current - AmmoSequence[%d]"), CurrentAmmoIndex);
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *msg2);
+
+	if (AmmoSequence.IsValidIndex(CurrentAmmoIndex))
+	{
+		//AmmoSequence.RemoveAt(CurrentAmmoIndex);
+		//CurrentAmmoIndex = FMath::Clamp(CurrentAmmoIndex, 0, AmmoSequence.Num() - 1);
+
+		++CurrentAmmoIndex;
+
+		// 삭제 후 로그출력
+		for (int i = 0; i < AmmoSequence.Num(); ++i)
+		{
+			switch (AmmoSequence[i])
+			{
+				case EAmmoType::Live:
+					AmmoTypeName = TEXT("Live");
+					break;
+				case EAmmoType::Blank:
+					AmmoTypeName = TEXT("Blank");
+					break;
+				default:
+					break;
+			}
+
+			UE_LOG(LogTemp, Warning, TEXT("========== After =========="));
+			FString msg3 = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *msg3);
+		}
+
+		FString msg4 = FString::Printf(TEXT("Current - AmmoSequence[%d]"), CurrentAmmoIndex);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg4);
 	}
 }
 
@@ -67,6 +127,12 @@ void ABRGameState::OnRep_TurnPlayer()
 			PC->OnTurnPlayerChanged();
 		}
 	}
+
+	/*ABRPlayerController* PC = Cast<ABRPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	if (PC)
+	{
+		PC->OnTurnPlayerChanged();
+	}*/
 }
 
 void ABRGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
