@@ -51,12 +51,18 @@ public:
 	void ServerRPC_RequestFire(int32 TargetPlayerIndex);
 
 	UFUNCTION()
+	bool TrySkipAmmoIfNeeded(class ABRGameState* GS, class ABRPlayerState* PS);
+
+	UFUNCTION()
 	void OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
 
 	UFUNCTION()
 	void AttackDamage(class ABRPlayerState* PS);
 
 // 애니메이션
+	UFUNCTION()
+	void TriggerFireAnim(class ABRPlayerState* PS, int32 TargetPlayerIndex);
+
 	UFUNCTION()
 	void TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 TargetPlayerIndex, class ABRPlayerState* PS);
 	

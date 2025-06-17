@@ -160,7 +160,7 @@ void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
 	SetupItemsForRound(MatchIdx, RoundIdx);
 
 	// 매치2부터 아이템 시스템 시작
-	if (MatchIdx >= 1 && !ItemBox)
+	if (MatchIdx >= 1 /*&& !ItemBox*/)
 	{
 		NumActiveItemBoxes = 0;
 
@@ -265,10 +265,10 @@ void ABRGameMode::OnRoundEnd()
 		}
 
 		// 최종 승리자가 없다면 다음 매치로
-		++CurrentMatchIdx;
-		CurrentRoundIdx = 0;
-		if (AllMatches.IsValidIndex(CurrentMatchIdx))
+		if (AllMatches.IsValidIndex(CurrentMatchIdx + 1))
 		{
+			++CurrentMatchIdx;
+			CurrentRoundIdx = 0;
 			// 새 매치 HP/턴 리셋
 			int32 StartHp = AllMatches[CurrentMatchIdx].PlayerHP;
 			for (APlayerState* PS : GameState->PlayerArray)
@@ -286,9 +286,9 @@ void ABRGameMode::OnRoundEnd()
 	}
 
 // 3. 둘 다 살아있다면 다음 라운드로
-	++CurrentRoundIdx;
-	if (AllMatches[CurrentMatchIdx].Rounds.IsValidIndex(CurrentRoundIdx))
+	if (AllMatches[CurrentMatchIdx].Rounds.IsValidIndex(CurrentRoundIdx + 1))
 	{
+		++CurrentRoundIdx;
 		StartRound(CurrentMatchIdx, CurrentRoundIdx);
 		// 라운드별 초기화
 		UE_LOG(LogTemp, Log, TEXT("Start Next Round_%d"), CurrentRoundIdx + 1);
@@ -429,9 +429,9 @@ void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
 			CurrentRoundItems.Add(EItemType::Beer);
 			CurrentRoundItems.Add(EItemType::Knife);
 		}
-		else if (RoundIdx == 2)
+		else if (RoundIdx >= 2)
 		{
-			// 3 Round : 아이템 3종 랜덤 지급
+			// 3 Round ~ : 아이템 3종 랜덤 지급
 			TArray<EItemType> Pool = {
 				EItemType::Cigarette,
 				EItemType::Handcuff,
@@ -443,7 +443,7 @@ void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
 			{
 				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
 				CurrentRoundItems.Add(Pool[idx]);
-				//Pool.RemoveAt(idx); // 중복 방지
+				Pool.RemoveAt(idx); // 중복 방지
 			}
 		}
 	}
@@ -457,7 +457,14 @@ void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
 				EItemType::Knife
 		};
 
-		if (RoundIdx == 0)
+		for (int i = 0; i < 3; ++i)
+		{
+			int32 idx = FMath::RandRange(0, Pool.Num() - 1);
+			CurrentRoundItems.Add(Pool[idx]);
+			Pool.RemoveAt(idx); // 중복 방지
+		}
+
+		/*if (RoundIdx == 0)
 		{
 			for (int i = 0; i < 3; ++i)
 			{
@@ -480,7 +487,7 @@ void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
 				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
 				CurrentRoundItems.Add(Pool[idx]);
 			}
-		}
+		}*/
 	}
 }
 

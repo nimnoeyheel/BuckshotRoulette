@@ -35,7 +35,7 @@ public:
 
 protected:
 	UPROPERTY()
-	EItemType ItemType = EItemType::Beer; 
+	EItemType ItemType = EItemType::Beer;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UStaticMeshComponent* BeerMesh;

@@ -91,22 +91,21 @@ void ABeerItem::UseItem()
 
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	if (!GS || GS->AmmoSequence.Num() <= 0) return;
-
-	// 탄창에서 현재 총알 하나 제거
-	GS->RemoveNextAmmo();
-
+	 
 	// 사용자의 PlayerState 참조해서 사용 수치 갱신
-	ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer->PlayerState);
-	if (PS)
+	if (ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer ? OwningPlayer->PlayerState : nullptr))
 	{
 		PS->MLOfBeerDrank++;
 		PS->TotalCash += (PS->MLOfBeerDrank * 250);
+		
+		// 발사 시 탄 하나 건너뛰도록 설정
+		PS->SetSkipAmmoFlag(true);
 	}
 
 	// 애니메이션/이펙트 알림
 	Multicast_PlayUseEffect();
 
-	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
+	if (GS->CurrentAmmoIndex == GS->AmmoSequence.Num())
 	{
 		UE_LOG(LogTemp, Log, TEXT("Beer Removed last ammo. Ending round."));
 

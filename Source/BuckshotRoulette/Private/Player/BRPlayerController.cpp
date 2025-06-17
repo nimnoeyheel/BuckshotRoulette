@@ -196,59 +196,66 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	ABRPlayerState* PS = Cast<ABRPlayerState>(PlayerState);
 	if (!GS || !PS) return;
 
-	// 총알 소진 체크
-	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
-	{
-		UE_LOG(LogTemp, Log, TEXT("Ammo is empty.."));
-		return;
-	}
+	if (TrySkipAmmoIfNeeded(GS, PS)) return;
+
 	bool bIsLastAmmo = (GS->CurrentAmmoIndex == GS->AmmoSequence.Num() - 1);
 	UE_LOG(LogTemp, Log, TEXT("bIsLastAmmo = %s"), bIsLastAmmo ? TEXT("true") : TEXT("false"));
 
 	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
-	GS->CurrentAmmoIndex++;
 
-	if (FiredAmmo == EAmmoType::Live)
+	FString AmmoType;
+	switch (FiredAmmo)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Live"));
+		case EAmmoType::Live:
+			AmmoType = TEXT("Live");
+			break;
+		case EAmmoType::Blank:
+			AmmoType = TEXT("Blank");
+			break;
+		default:
+			AmmoType = TEXT("Unknown");
+			break;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("FiredAmmo is Blank"));
-	}
+	UE_LOG(LogTemp, Log, TEXT("FiredAmmo is %s"), *AmmoType);
+
+	// 다음 총알 미리 갱신
+	GS->CurrentAmmoIndex++;
 
 	// Winner Result Data 증가
 	PS->ShotsFired++;
 	PS->ShellsEjected++;
 	PS->TotalCash += (PS->ShotsFired * 100) + (PS->ShellsEjected * 100);
 
-	// 공격 애니메이션
 	// FiringPlayerIndex 구하기
 	int32 FiringPlayerIndex = PS->PlayerIndex;
-	if (PS->PlayerIndex == FiringPlayerIndex)
-	{
-		// 자기 자신에게 쏘면
-		bool bSelfAttack = (FiringPlayerIndex == TargetPlayerIndex + 1);
-		if (bSelfAttack)
-		{
-			// 총 애니메이션만 실행
-		}
-		else
-		{
-			if (APawn* MyPawn = GetPawn())
-			{
-				if (MyPawn)
-				{
-					ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
-					if (MyChar) MyChar->Multicast_TriggerAttackAnim();
-				}
-			}
-		}
-	}
+	// 공격 애니메이션
+	TriggerFireAnim(PS, TargetPlayerIndex);
 
 	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
 	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출
 	GS->Multicast_FireResult(FiringPlayerIndex, TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
+}
+
+bool ABRPlayerController::TrySkipAmmoIfNeeded(ABRGameState* GS, ABRPlayerState* PS)
+{
+	if (!GS || !PS) return false;
+
+	if (PS->ShouldSkipAmmo())
+	{
+		PS->SetSkipAmmoFlag(false); // 사용 후 초기화
+		GS->CurrentAmmoIndex++;
+
+		UE_LOG(LogTemp, Warning, TEXT("[Beer] Skipped 1 ammo. CurrentAmmoIndex = %d / Total = %d"), GS->CurrentAmmoIndex, GS->AmmoSequence.Num()-1);
+
+		// 총알이 더 이상 없으면 즉시 라운드 종료
+		if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Beer] Skipped into final ammo. Ending round."));
+			OnRoundEnd();
+			return true; // 발사 스킵
+		}
+	}
+	return false; // 스킵 없이 계속 진행
 }
 
 void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
@@ -417,6 +424,23 @@ void ABRPlayerController::TriggerDeathAnim(ABRPlayerState* PS)
 	if (!Char || !Char->GetShotgunActor()) return;
 
 	Char->Multicast_TriggerDeathAnim();
+}
+
+void ABRPlayerController::TriggerFireAnim(ABRPlayerState* PS, int32 TargetPlayerIndex)
+{
+	int32 FiringPlayerIndex = PS->PlayerIndex;
+
+	if (FiringPlayerIndex != TargetPlayerIndex + 1)
+	{
+		if (APawn* MyPawn = GetPawn())
+		{
+			if (ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn))
+			{
+				MyChar->Multicast_TriggerAttackAnim();
+			}
+
+		}
+	}
 }
 
 void ABRPlayerController::TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 TargetPlayerIndex, ABRPlayerState* PS)
