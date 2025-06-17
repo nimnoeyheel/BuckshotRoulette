@@ -53,6 +53,19 @@ public:
 	UFUNCTION()
 	void OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
 
+	UFUNCTION()
+	void AttackDamage(class ABRPlayerState* PS);
+
+// 애니메이션
+	UFUNCTION()
+	void TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 TargetPlayerIndex, class ABRPlayerState* PS);
+	
+	UFUNCTION()
+	void TriggerDamageAnim(class ABRPlayerState* PS);
+	
+	UFUNCTION()
+	void TriggerDeathAnim(class ABRPlayerState* PS);
+
 // 턴, 라운드 변경 함수 타이머
 	UFUNCTION()
 	bool TrySkipOpponentTurn(class ABRPlayerState* PS);

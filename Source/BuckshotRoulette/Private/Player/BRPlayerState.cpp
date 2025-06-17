@@ -47,6 +47,18 @@ void ABRPlayerState::OnRep_Hp()
 	}
 }
 
+void ABRPlayerState::OnRep_SkipOpponentTurn()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[OnRep] SkipOpponentTurn = %s"), bSkipOppenentTurn ? TEXT("TRUE") : TEXT("FALSE"));
+	// 클라이언트에서도 수갑 애님 동기화
+}
+
+void ABRPlayerState::OnRep_KnifeEffectPending()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[OnRep] KnifeEffectPending = %s"), bKnifeEffectPending ? TEXT("TRUE") : TEXT("FALSE"));
+	// 클라이언트에서도 나이프로 총 써는 애님 동기화
+}
+
 void ABRPlayerState::OnRep_TotalCash()
 {
 
@@ -63,4 +75,6 @@ void ABRPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(ABRPlayerState, CigarettesSmoked);
 	DOREPLIFETIME(ABRPlayerState, MLOfBeerDrank);
 	DOREPLIFETIME(ABRPlayerState, TotalCash);
+	DOREPLIFETIME(ABRPlayerState, bSkipOppenentTurn);
+	DOREPLIFETIME(ABRPlayerState, bKnifeEffectPending);
 }

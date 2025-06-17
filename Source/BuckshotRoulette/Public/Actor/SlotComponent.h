@@ -17,6 +17,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	void AttachItem(class AItem* Item);
@@ -43,7 +44,7 @@ public:
 	class AItem* AttachedItem = nullptr;
 
 	// 슬롯 상태
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	bool bHasItem = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

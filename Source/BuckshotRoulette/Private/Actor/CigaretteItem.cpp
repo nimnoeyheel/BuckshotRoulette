@@ -97,6 +97,7 @@ void ACigaretteItem::UseItem()
 
 	PS->Hp++;
 	PS->CigarettesSmoked++;
+	PS->TotalCash += (PS->CigarettesSmoked * 100);
 	PS->OnRep_Hp();
 
 	Multicast_PlayUseEffect();

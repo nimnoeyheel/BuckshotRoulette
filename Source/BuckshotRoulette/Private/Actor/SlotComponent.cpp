@@ -8,6 +8,7 @@
 #include "Game/BRGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/BRPlayerController.h"
+#include "Net/UnrealNetwork.h"
 
 USlotComponent::USlotComponent()
 {
@@ -36,6 +37,13 @@ void USlotComponent::BeginPlay()
 
 		ClickBox->OnClicked.AddDynamic(this, &USlotComponent::OnBoxClicked);
 	}
+}
+
+void USlotComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(USlotComponent, bHasItem);
 }
 
 void USlotComponent::AttachItem(AItem* Item)
@@ -67,7 +75,7 @@ void USlotComponent::AttachItem(AItem* Item)
 
 void USlotComponent::DetachItem()
 {
-	if (bHasItem || !AttachedItem) return;
+	if (!bHasItem || !AttachedItem) return;
 	bHasItem = false;
 
 	// 아이템을 슬롯에서 Detach

@@ -93,15 +93,14 @@ void ABeerItem::UseItem()
 
 	// 탄창에서 현재 총알 하나 제거
 	GS->RemoveNextAmmo();
+	UE_LOG(LogTemp, Log, TEXT("Removed ammo. Remaining count: %d, CurrentAmmoIndex: %d"), GS->AmmoSequence.Num(), GS->CurrentAmmoIndex);
 
 	// 사용자의 PlayerState 참조해서 사용 수치 갱신
-	if (OwningPlayer)
+	ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer->PlayerState);
+	if (PS)
 	{
-		ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer->PlayerState);
-		if (PS)
-		{
-			PS->MLOfBeerDrank++;
-		}
+		PS->MLOfBeerDrank++;
+		PS->TotalCash += (PS->MLOfBeerDrank * 250);
 	}
 
 	// 애니메이션/이펙트 알림

@@ -220,7 +220,7 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	// Winner Result Data 증가
 	PS->ShotsFired++;
 	PS->ShellsEjected++;
-	PS->TotalCash += PS->ShotsFired + PS->ShellsEjected;
+	PS->TotalCash += (PS->ShotsFired * 100) + (PS->ShellsEjected * 100);
 
 	// 공격 애니메이션
 	// FiringPlayerIndex 구하기
@@ -272,26 +272,15 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 	// 내가 타겟일 때
 	if (MyState == TargetState)
 	{
-		APawn* MyPawn = MyState->GetPawn();
-		if (!MyPawn) return; 
-		ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
-		if (!MyChar || !MyChar->GetShotgunActor()) return;
-		
 		// Self Fire Anim
-		if (FiringPlayerIndex == TargetPlayerIndex + 1)
-		{
-			bool bIsServer = MyState->PlayerIndex == 1 ? true : false;
-			MyChar->GetShotgunActor()->Multicast_TriggerSelfFireAnim(bIsServer);
-		}
+		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, MyState);
 
 		if (FiredAmmo == EAmmoType::Live)
 		{
-			MyState->Hp--;
-			OnUpdateHp();
-			UE_LOG(LogTemp, Log, TEXT("%s HP -1"), *MyState->GetPlayerName());
+			AttackDamage(MyState);
 			
 			// Damage Anim
-			MyChar->Multicast_TriggerDamageAnim();
+			TriggerDamageAnim(MyState);
 
 			// 체력이 0이하라면
 			if (MyState->Hp <= 0)
@@ -299,45 +288,36 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 				// 해당 라운드 종료
 				bRoundOver = true;
 
-				// 사망 애니메이션
-				MyChar->Multicast_TriggerDeathAnim();
+				// Death Anim
+				TriggerDeathAnim(MyState);
 			}
 			else if (HasAuthority())
 			{
 				// 내 턴에 나를 쐈다면
 				if (MyState == GS->TurnPlayer)
 				{
-					if (HasAuthority())
-					{
-						TrySkipOpponentTurn(MyState);
-					}
+					if (!TrySkipOpponentTurn(MyState)) NextTurn();
 				}
 				// 상대가 나를 쐈다면
-				else if (HasAuthority())
+				else
 				{
-					if (!TrySkipOpponentTurn(OpponentState))
-					{
-						NextTurn();
-					}
+					if (!TrySkipOpponentTurn(OpponentState)) NextTurn();
 				}
 			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
 		{
-			// 내 턴에 나를 쐈다면
-			if (MyState == GS->TurnPlayer)
+			if (HasAuthority())
 			{
-				if (HasAuthority())
+				// 내 턴에 나를 쐈다면
+				if (MyState == GS->TurnPlayer)
 				{
 					TrySkipOpponentTurn(MyState);
 				}
-			}
-			// 상대가 나를 쐈다면
-			else if (HasAuthority())
-			{
-				if (!TrySkipOpponentTurn(OpponentState))
+				// 상대가 나를 쐈다면
+				else
 				{
-					NextTurn();
+					if (!TrySkipOpponentTurn(OpponentState)) NextTurn();
 				}
 			}
 		}
@@ -346,81 +326,110 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 	// 상대가 타겟일 때
 	else if (OpponentState == TargetState)
 	{
-		APawn* OpponentPawn = OpponentState->GetPawn();
-		if (!OpponentPawn) return;
-		ABRCharacter* OpponentChar = Cast<ABRCharacter>(OpponentPawn);
-		if (!OpponentChar || !OpponentChar->GetShotgunActor()) return;
-
-		// Self Fire Anim
-		if (FiringPlayerIndex == TargetPlayerIndex + 1)
-		{
-			bool bIsServer = OpponentState->PlayerIndex == 1 ? true : false;
-			OpponentChar->GetShotgunActor()->Multicast_TriggerSelfFireAnim(bIsServer);
-		}
+		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, OpponentState);
 
 		if (FiredAmmo == EAmmoType::Live)
 		{
-			OpponentState->Hp--;
-			OnUpdateHp();
-			UE_LOG(LogTemp, Log, TEXT("%s Damage -1"), *OpponentState->GetPlayerName());
+			AttackDamage(OpponentState);
 
-			// 피격 애니메이션
-			OpponentChar->Multicast_TriggerDamageAnim();
+			// Damage Anim
+			TriggerDamageAnim(OpponentState);
 
 			if (OpponentState->Hp <= 0)
 			{
 				// 해당 라운드 종료
 				bRoundOver = true;
 
-				// 사망 애니메이션
-				OpponentChar->Multicast_TriggerDeathAnim();
+				// Death Anim
+				TriggerDeathAnim(OpponentState);
 			}
 			else if (HasAuthority())
 			{
-				// 내 턴에 나를 쐈다면
+				// 내 턴에 상대를 쐈다면
 				if (MyState == GS->TurnPlayer)
 				{
-					if (HasAuthority())
-					{
-						TrySkipOpponentTurn(MyState);
-					}
+					if(!TrySkipOpponentTurn(MyState)) NextTurn();
 				}
-				// 상대가 나를 쐈다면
-				else if (HasAuthority())
+				// 상대가 자기 자신을 쐈으면
+				else
 				{
-					if (!TrySkipOpponentTurn(OpponentState))
-					{
-						NextTurn();
-					}
+					if(!TrySkipOpponentTurn(OpponentState)) NextTurn();
 				}
 			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
 		{
-			// 내 턴에 상대를 쐈다면
-			if (MyState == GS->TurnPlayer)
+			if (HasAuthority())
 			{
-				if (HasAuthority())
+				// 내 턴에 상대를 쐈다면
+				if (MyState == GS->TurnPlayer)
 				{
-					if (!TrySkipOpponentTurn(MyState))
-					{
-						NextTurn();
-					}
+					if(!TrySkipOpponentTurn(MyState)) NextTurn();
 				}
-			}
-			// 상대가 자기 자신을 쐈다면
-			else if (HasAuthority())
-			{
-				TrySkipOpponentTurn(OpponentState);
+				// 상대가 자기 자신을 쐈다면
+				else
+				{
+					TrySkipOpponentTurn(OpponentState);
+				}
 			}
 		}
 	}
-
+	
 	// 마지막 총알일 때 해당 라운드 종료
-	if ((bIsLastAmmo || bRoundOver) && HasAuthority())
+	if (HasAuthority())
 	{
-		bIsLastAmmo = false;
-		OnRoundEnd();
+		bool bIsAmmoEmpty = (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num());
+		if (bIsAmmoEmpty || bIsLastAmmo || bRoundOver)
+		{
+			bIsLastAmmo = false;
+			OnRoundEnd();
+		}
+	}
+}
+
+void ABRPlayerController::AttackDamage(ABRPlayerState* PS)
+{
+	if (PS && PS->IsKnifeEffectPending())
+	{
+		PS->SetKnifeEffectPending(false); // 사용 후 초기화
+		PS->Hp -= 2;
+	}
+	else PS->Hp--;
+
+	OnUpdateHp();
+}
+
+void ABRPlayerController::TriggerDamageAnim(ABRPlayerState* PS)
+{
+	APawn* MyPawn = PS->GetPawn();
+	if (!MyPawn) return;
+	ABRCharacter* Char = Cast<ABRCharacter>(MyPawn);
+	if (!Char || !Char->GetShotgunActor()) return;
+
+	Char->Multicast_TriggerDamageAnim();
+}
+
+void ABRPlayerController::TriggerDeathAnim(ABRPlayerState* PS)
+{
+	APawn* MyPawn = PS->GetPawn();
+	if (!MyPawn) return;
+	ABRCharacter* Char = Cast<ABRCharacter>(MyPawn);
+	if (!Char || !Char->GetShotgunActor()) return;
+
+	Char->Multicast_TriggerDeathAnim();
+}
+
+void ABRPlayerController::TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 TargetPlayerIndex, ABRPlayerState* PS)
+{
+	APawn* MyPawn = PS->GetPawn();
+	if (!MyPawn) return;
+	ABRCharacter* Char = Cast<ABRCharacter>(MyPawn);
+	if (!Char || !Char->GetShotgunActor()) return;
+
+	if (FiringPlayerIndex == TargetPlayerIndex + 1)
+	{
+		bool bIsServer = PS->PlayerIndex == 1 ? true : false;
+		Char->GetShotgunActor()->Multicast_TriggerSelfFireAnim(bIsServer);
 	}
 }
 
@@ -432,7 +441,6 @@ bool ABRPlayerController::TrySkipOpponentTurn(ABRPlayerState* PS)
 		UE_LOG(LogTemp, Log, TEXT("Handcuff used. Keeping turn for %s."), *PS->GetPlayerName());
 
 		// 상대방 수갑 애님 포커싱 연출
-
 		return true;
 	}
 	return false;

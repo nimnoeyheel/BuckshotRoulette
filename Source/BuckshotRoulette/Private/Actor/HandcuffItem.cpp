@@ -87,7 +87,7 @@ void AHandcuffItem::UseItem()
 {
 	if (!HasAuthority()) return;
 
-	ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer->PlayerState);
+	ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer ? OwningPlayer->PlayerState : nullptr);
 	if (PS)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[HANDCUFF] %s skip opponent turn"), *PS->GetPlayerName());

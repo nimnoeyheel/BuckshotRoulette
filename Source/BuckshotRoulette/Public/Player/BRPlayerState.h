@@ -44,8 +44,18 @@ public:
 	void SetSkipOpponentTurn(bool b) { bSkipOppenentTurn = b; }
 	bool ShouldSkipOpponentTurn() const { return bSkipOppenentTurn; }
 
-	UPROPERTY(Replicated)
+	UFUNCTION()
+	void OnRep_SkipOpponentTurn();
+	UPROPERTY(ReplicatedUsing = OnRep_SkipOpponentTurn)
 	bool bSkipOppenentTurn = false;
+
+	void SetKnifeEffectPending(bool b) { bKnifeEffectPending  = b; }
+	bool IsKnifeEffectPending() const { return bKnifeEffectPending; }
+
+	UFUNCTION()
+	void OnRep_KnifeEffectPending();
+	UPROPERTY(ReplicatedUsing = OnRep_KnifeEffectPending)
+	bool bKnifeEffectPending = false;
 
 // WinnerData : 위너 UI만 반영
 	UFUNCTION()

@@ -6,6 +6,7 @@
 #include "Player/BRPlayerController.h"
 #include "UI/MainWidget.h"
 #include "UI/InGameWidget.h"
+#include "Player/BRPlayerState.h"
 
 AKnifeItem::AKnifeItem()
 {
@@ -69,7 +70,12 @@ void AKnifeItem::UseItem()
 {
 	if (!HasAuthority()) return;
 
-	// 데미지 2배
+	ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer ? OwningPlayer->PlayerState : nullptr);
+	if (PS)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[KNIFE] %s knife effect pending."), *PS->GetPlayerName());
+		PS->SetKnifeEffectPending(true);
+	}
 
 	Multicast_PlayUseEffect();
 
