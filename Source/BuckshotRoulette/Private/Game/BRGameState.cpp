@@ -53,35 +53,25 @@ void ABRGameState::RemoveNextAmmo()
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg);
 	}
 
-	if (AmmoSequence.IsValidIndex(CurrentAmmoIndex))
-	{
-		AmmoSequence.RemoveAt(CurrentAmmoIndex);
-		//CurrentAmmoIndex = FMath::Clamp(CurrentAmmoIndex, 0, AmmoSequence.Num() - 1);
-		
-		// 삭제 후 인덱스가 초과되었으면 보정
-		if (CurrentAmmoIndex >= AmmoSequence.Num())
-		{
-			CurrentAmmoIndex = FMath::Clamp(AmmoSequence.Num() - 1, 0, AmmoSequence.Num() - 1);
-		}
+	CurrentAmmoIndex++;
 
-		// 삭제 후 로그출력
-		UE_LOG(LogTemp, Warning, TEXT("========== After =========="));
-		for (int i = 0; i < AmmoSequence.Num(); ++i)
+	// 삭제 후 로그출력
+	UE_LOG(LogTemp, Warning, TEXT("========== After =========="));
+	for (int i = 0; i < AmmoSequence.Num(); ++i)
+	{
+		switch (AmmoSequence[i])
 		{
-			switch (AmmoSequence[i])
-			{
-				case EAmmoType::Live:
-					AmmoTypeName = TEXT("Live");
-					break;
-				case EAmmoType::Blank:
-					AmmoTypeName = TEXT("Blank");
-					break;
-				default:
-					break;
-			}
-			FString msg3 = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *msg3);
+			case EAmmoType::Live:
+				AmmoTypeName = TEXT("Live");
+				break;
+			case EAmmoType::Blank:
+				AmmoTypeName = TEXT("Blank");
+				break;
+			default:
+				break;
 		}
+		FString msg3 = FString::Printf(TEXT("AmmoSequence[%d]: %s"), i, *AmmoTypeName);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *msg3);
 	}
 }
 

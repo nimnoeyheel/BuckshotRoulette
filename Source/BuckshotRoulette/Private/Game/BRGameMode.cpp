@@ -425,9 +425,6 @@ void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
 		else if (RoundIdx == 1)
 		{
 			// 2 Round : 돋보기, 맥주, 칼
-			//CurrentRoundItems.Add_GetRef(EItemType::Magnifier);
-			//CurrentRoundItems.Add_GetRef(EItemType::Beer);
-			//CurrentRoundItems.Add_GetRef(EItemType::Knife);
 			CurrentRoundItems.Add(EItemType::Magnifier);
 			CurrentRoundItems.Add(EItemType::Beer);
 			CurrentRoundItems.Add(EItemType::Knife);

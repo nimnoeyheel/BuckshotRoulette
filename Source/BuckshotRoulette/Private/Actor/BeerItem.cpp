@@ -9,6 +9,7 @@
 #include "UI/MainWidget.h"
 #include "UI/InGameWidget.h"
 #include "Actor/SlotComponent.h"
+#include "Game/BRGameMode.h"
 
 ABeerItem::ABeerItem()
 {
@@ -93,7 +94,6 @@ void ABeerItem::UseItem()
 
 	// 탄창에서 현재 총알 하나 제거
 	GS->RemoveNextAmmo();
-	UE_LOG(LogTemp, Log, TEXT("Removed ammo. Remaining count: %d, CurrentAmmoIndex: %d"), GS->AmmoSequence.Num(), GS->CurrentAmmoIndex);
 
 	// 사용자의 PlayerState 참조해서 사용 수치 갱신
 	ABRPlayerState* PS = Cast<ABRPlayerState>(OwningPlayer->PlayerState);
@@ -105,6 +105,14 @@ void ABeerItem::UseItem()
 
 	// 애니메이션/이펙트 알림
 	Multicast_PlayUseEffect();
+
+	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Beer Removed last ammo. Ending round."));
+
+		ABRGameMode* GM = GetWorld()->GetAuthGameMode<ABRGameMode>();
+		GM->OnRoundEnd();
+	}
 
 	// 슬롯에서 아이템 Detach 및 Destroy
 	Super::UseItem();

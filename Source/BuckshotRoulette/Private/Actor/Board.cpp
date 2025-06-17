@@ -13,6 +13,7 @@
 #include "Player/BRPlayerState.h"
 #include "EngineUtils.h"
 #include "Game/BRGameMode.h"
+#include "Actor/BeerItem.h"
 
 // Sets default values
 ABoard::ABoard()
@@ -145,12 +146,6 @@ void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _b
 	if (ABRPlayerState* PS = Cast<ABRPlayerState>(ForPlayer->PlayerState))
 		PlayerIdx = PS->PlayerIndex;
 
-	// 플레이어 인덱스 기반 위치 분기 (서버=0, 클라=1)
-	FVector SpawnLoc = (PlayerIdx == 1)
-		? FVector(750, 10, 260)		// 서버 (X=750.000000,Y=10.000000,Z=250.000000)
-		: FVector(220, 15, 260);	// 클라 (X=220.000000,Y=15.000000,Z=250.000000)
-	FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
-
 	TSubclassOf<AItem> ItemClass = AItem::StaticClass();
 	if (ItemBlueprintMap.Contains(ItemType))
 	{
@@ -160,6 +155,19 @@ void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _b
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No ItemClass found for %d"), (int32)ItemType);
 		return;
+	}
+
+	// 플레이어 인덱스 기반 위치 분기 (서버=0, 클라=1)
+	FVector SpawnLoc = (PlayerIdx == 1)
+		? FVector(750, 10, 260)		// 서버 (X=750.000000,Y=10.000000,Z=250.000000)
+		: FVector(220, 15, 260);	// 클라 (X=220.000000,Y=15.000000,Z=250.000000)
+	FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
+
+	if (ItemType == EItemType::Beer)
+	{
+		SpawnLoc = (PlayerIdx == 1)
+			? FVector(750, 10, 275)
+			: FVector(220, 15, 275);
 	}
 
 	AItem* Item = GetWorld()->SpawnActor<AItem>(ItemClass, SpawnTransform);
