@@ -4,6 +4,7 @@
 #include "Actor/MagnifierItem.h"
 #include "Components/BoxComponent.h"
 #include "Player/BRPlayerController.h"
+#include "Game/BRGameState.h"
 #include "UI/MainWidget.h"
 #include "UI/InGameWidget.h"
 
@@ -54,8 +55,28 @@ void AMagnifierItem::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 void AMagnifierItem::OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
-	if (!PC || !PC->IsMyTurn()) return;
+	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+
+	// UI로 현재 총알 타입 확인
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS || GS->AmmoSequence.Num() <= 0) return;
+
+	FString AmmoType;
+	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
+	switch (FiredAmmo)
+	{
+		case EAmmoType::Live:
+			AmmoType = TEXT("Live");
+			break;
+		case EAmmoType::Blank:
+			AmmoType = TEXT("Blank");
+			break;
+		default:
+			AmmoType = TEXT("Unknown");
+			break;
+	}
+	PC->MainUI->InGameUI->ShowCurrentAmmoInfo(AmmoType);
 
 	ServerRPC_UseItem();
 }
@@ -68,8 +89,6 @@ void AMagnifierItem::ServerRPC_UseItem_Implementation()
 void AMagnifierItem::UseItem()
 {
 	if (!HasAuthority()) return;
-
-	// 탄창 총알 확인
 
 	Multicast_PlayUseEffect();
 

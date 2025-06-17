@@ -108,4 +108,7 @@ public:
 	UFUNCTION()
 	void ShowItemsRuleSubtitle(EItemType ItemType);
 
+	UFUNCTION()
+	void ShowCurrentAmmoInfo(const FString& AmmoType);
+
 };

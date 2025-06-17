@@ -86,12 +86,14 @@ void UInGameWidget::SetVisibleSubtitle(bool bVisible)
 			FTimerDelegate::CreateLambda([&]()
 			{
 				SetVisibleOverlay(Overlay_Subtitle, false);
+				Txt_Subtitle->SetText(FText::FromString(TEXT(" ")));
 			}
 		), 3.0f, false);
 	}
 	else
 	{
 		SetVisibleOverlay(Overlay_Subtitle, false);
+		Txt_Subtitle->SetText(FText::FromString(TEXT(" ")));
 	}
 }
 
@@ -143,6 +145,13 @@ void UInGameWidget::ShowItemsRuleSubtitle(EItemType ItemType)
 			break;
 	}
 
+	Txt_Subtitle->SetText(FText::FromString(Msg));
+	SetVisibleOverlay(Overlay_Subtitle, true);
+}
+
+void UInGameWidget::ShowCurrentAmmoInfo(const FString& AmmoType)
+{
+	FString Msg = FString::Printf(TEXT("Current Ammo is %s."), *AmmoType);
 	Txt_Subtitle->SetText(FText::FromString(Msg));
 	SetVisibleOverlay(Overlay_Subtitle, true);
 }
