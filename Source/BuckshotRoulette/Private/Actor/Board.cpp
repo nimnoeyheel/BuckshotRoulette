@@ -159,17 +159,10 @@ void ABoard::SpawnItem(EItemType ItemType, APlayerController* ForPlayer, bool _b
 
 	// 플레이어 인덱스 기반 위치 분기 (서버=0, 클라=1)
 	FVector SpawnLoc = (PlayerIdx == 1)
-		? FVector(750, 10, 260)		// 서버 (X=750.000000,Y=10.000000,Z=250.000000)
-		: FVector(220, 15, 260);	// 클라 (X=220.000000,Y=15.000000,Z=250.000000)
+		? FVector(750, 10, 267)		// 서버 (X=750.000000,Y=10.000000,Z=267.000000)
+		: FVector(220, 15, 267);	// 클라 (X=220.000000,Y=15.000000,Z=267.000000)
+
 	FTransform SpawnTransform = FTransform(FRotator(0), SpawnLoc);
-
-	if (ItemType == EItemType::Beer)
-	{
-		SpawnLoc = (PlayerIdx == 1)
-			? FVector(750, 10, 275)
-			: FVector(220, 15, 275);
-	}
-
 	AItem* Item = GetWorld()->SpawnActor<AItem>(ItemClass, SpawnTransform);
 	if (Item)
 	{

@@ -16,7 +16,7 @@ ABeerItem::ABeerItem()
 	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
 	RootComponent = OverlapBox;
 
-	OverlapBox->SetBoxExtent(FVector(2.5, 2.5, 5));
+	OverlapBox->SetBoxExtent(FVector(2.5, 2.5, 10)); // (X=2.500000,Y=2.500000,Z=10.000000)
 	OverlapBox->SetRelativeScale3D(FVector(7));
 	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
@@ -30,7 +30,7 @@ ABeerItem::ABeerItem()
 	{
 		BeerMesh->SetStaticMesh(BeerMeshAsset.Object);
 		BeerMesh->SetupAttachment(RootComponent);
-		BeerMesh->SetRelativeLocation(FVector(0, 3.5, -4.5)); // (X=0.000000,Y=3.500000,Z=-4.500000)
+		BeerMesh->SetRelativeLocation(FVector(0, 3.5, -1.5)); // (X=0.000000,Y=3.500000,Z=-1.500000)
 	}
 
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
