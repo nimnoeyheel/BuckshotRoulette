@@ -54,13 +54,6 @@ public:
 	bool bKnifeEffectPending = false;
 	void SetKnifeEffectPending(bool b) { bKnifeEffectPending  = b; }
 	bool IsKnifeEffectPending() const { return bKnifeEffectPending; }
-	
-	UFUNCTION()
-	void OnRep_SkipAmmo();
-	UPROPERTY(ReplicatedUsing = OnRep_SkipAmmo)
-	bool bShouldSkipAmmo = false;
-	void SetSkipAmmoFlag(bool b) { bShouldSkipAmmo = b; }
-	bool ShouldSkipAmmo() const { return bShouldSkipAmmo; }
 
 // WinnerData : 위너 UI만 반영
 	UFUNCTION()

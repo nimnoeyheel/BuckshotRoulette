@@ -138,18 +138,6 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	SetInputEnable(TurnPlayerState == PlayerState);
 }
 
-//void ABRPlayerController::OnUpdateNickname()
-//{
-//	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-//	if (!GS || !MainUI || !MainUI->InGameUI) return;
-//
-//	TArray<APlayerState*> Players = GS->PlayerArray;
-//	FString Player1Nick = Players[0] ? Players[0]->GetPlayerName() : TEXT(" ");
-//	FString Player2Nick = Players[1] ? Players[1]->GetPlayerName() : TEXT(" ");
-//
-//	MainUI->InGameUI->UpdatePlayerNickname(Player1Nick, Player2Nick);
-//}
-
 void ABRPlayerController::OnUpdateNewRound()
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
@@ -196,7 +184,11 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	ABRPlayerState* PS = Cast<ABRPlayerState>(PlayerState);
 	if (!GS || !PS) return;
 
-	if (TrySkipAmmoIfNeeded(GS, PS)) return;
+	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Ammo is null.."));
+		return;
+	}
 
 	bool bIsLastAmmo = (GS->CurrentAmmoIndex == GS->AmmoSequence.Num() - 1);
 	UE_LOG(LogTemp, Log, TEXT("bIsLastAmmo = %s"), bIsLastAmmo ? TEXT("true") : TEXT("false"));
@@ -234,28 +226,6 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
 	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출
 	GS->Multicast_FireResult(FiringPlayerIndex, TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
-}
-
-bool ABRPlayerController::TrySkipAmmoIfNeeded(ABRGameState* GS, ABRPlayerState* PS)
-{
-	if (!GS || !PS) return false;
-
-	if (PS->ShouldSkipAmmo())
-	{
-		PS->SetSkipAmmoFlag(false); // 사용 후 초기화
-		GS->CurrentAmmoIndex++;
-
-		UE_LOG(LogTemp, Warning, TEXT("[Beer] Skipped 1 ammo. CurrentAmmoIndex = %d / Total = %d"), GS->CurrentAmmoIndex, GS->AmmoSequence.Num()-1);
-
-		// 총알이 더 이상 없으면 즉시 라운드 종료
-		if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[Beer] Skipped into final ammo. Ending round."));
-			OnRoundEnd();
-			return true; // 발사 스킵
-		}
-	}
-	return false; // 스킵 없이 계속 진행
 }
 
 void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
@@ -320,11 +290,20 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 				if (MyState == GS->TurnPlayer)
 				{
 					TrySkipOpponentTurn(MyState);
+
+					// Knife 효과 무효: 변수 초기화
+					MyState->SetKnifeEffectPending(false);
 				}
 				// 상대가 나를 쐈다면
 				else
 				{
-					if (!TrySkipOpponentTurn(OpponentState)) NextTurn();
+					if (!TrySkipOpponentTurn(OpponentState))
+					{
+						NextTurn();
+
+						// Knife 효과 무효: 변수 초기화
+						OpponentState->SetKnifeEffectPending(false);
+					}
 				}
 			}
 		}
@@ -371,12 +350,21 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 				// 내 턴에 상대를 쐈다면
 				if (MyState == GS->TurnPlayer)
 				{
-					if(!TrySkipOpponentTurn(MyState)) NextTurn();
+					if (!TrySkipOpponentTurn(MyState))
+					{
+						NextTurn();
+
+						// Knife 효과 무효: 변수 초기화
+						MyState->SetKnifeEffectPending(false);
+					}
 				}
 				// 상대가 자기 자신을 쐈다면
 				else
 				{
 					TrySkipOpponentTurn(OpponentState);
+
+					// Knife 효과 무효: 변수 초기화
+					OpponentState->SetKnifeEffectPending(false);
 				}
 			}
 		}
@@ -518,6 +506,18 @@ void ABRPlayerController::OnGameOver(ABRPlayerState* Winner)
 		MainUI->ResultUI->SetLoserNickname(PS->GetPlayerName());
 	}
 	MainUI->ShowResult(bIsWinner);
+}
+
+void ABRPlayerController::ClientRPC_ShowCurrentAmmo_Implementation(EAmmoType AmmoType)
+{
+	FString TypeStr = (AmmoType == EAmmoType::Live) ? TEXT("Live")
+					: (AmmoType == EAmmoType::Blank) ? TEXT("Blank")
+					: TEXT("Unknown");
+
+	if (MainUI && MainUI->InGameUI)
+	{
+		MainUI->InGameUI->ShowCurrentAmmoInfo(TypeStr);
+	}
 }
 
 void ABRPlayerController::ServerRPC_ClickSlot_Implementation(USlotComponent* SlotComp, int32 SlotIdx)

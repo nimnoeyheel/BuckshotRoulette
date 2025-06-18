@@ -31,10 +31,6 @@ public:
 	UFUNCTION()
 	void OnTurnPlayerChanged();
 
-// 플레이어 닉네임 UI 업데이트
-	//UFUNCTION()
-	//void OnUpdateNickname();
-
 // 새로운 라운드 정보 업데이트
 	UFUNCTION()
 	void OnUpdateNewRound();
@@ -49,9 +45,6 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_RequestFire(int32 TargetPlayerIndex);
-
-	UFUNCTION()
-	bool TrySkipAmmoIfNeeded(class ABRGameState* GS, class ABRPlayerState* PS);
 
 	UFUNCTION()
 	void OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
@@ -89,6 +82,9 @@ public:
 // 아이템 관련
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ClickSlot(class USlotComponent* SlotComp, int32 SlotIdx);
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_ShowCurrentAmmo(EAmmoType AmmoType);
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")

@@ -59,12 +59,6 @@ void ABRPlayerState::OnRep_KnifeEffectPending()
 	// 클라이언트에서도 나이프로 총 써는 애님 동기화
 }
 
-void ABRPlayerState::OnRep_SkipAmmo()
-{
-	UE_LOG(LogTemp, Warning, TEXT("[OnRep] bShouldSkipAmmo = %s"), bShouldSkipAmmo ? TEXT("TRUE") : TEXT("FALSE"));
-	// 클라이언트에서도 맥주 마시는 애님 동기화
-}
-
 void ABRPlayerState::OnRep_TotalCash()
 {
 
@@ -85,5 +79,4 @@ void ABRPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 	DOREPLIFETIME(ABRPlayerState, bSkipOppenentTurn);
 	DOREPLIFETIME(ABRPlayerState, bKnifeEffectPending);
-	DOREPLIFETIME(ABRPlayerState, bShouldSkipAmmo);
 }

@@ -335,7 +335,9 @@ void ABRGameMode::InitMatchConfigs()
 		Match.Rounds = {
 			{ 1, 1 },	// 1라운드 : 1 Live, 1 Blank
 			{ 2, 2 },	// 2라운드 : 2 Live, 2 Blank
-			{ 3, 3 }	// 3라운드 : 3 Live, 3 Blank
+			{ 3, 3 },	// 3라운드 : 3 Live, 3 Blank
+			{ 4, 4 },	// 4라운드 : 4 Live, 4 Blank
+			{ 5, 5 }	// 5라운드 : 5 Live, 5 Blank
 		};
 		AllMatches.Add(Match);
 	}
@@ -347,7 +349,9 @@ void ABRGameMode::InitMatchConfigs()
 		Match.Rounds = {
 			{ 1, 2 },	// 1라운드 : 1 Live, 2 Blank
 			{ 4, 4 },	// 2라운드 : 4 Live, 4 Blank
-			{ 3, 2 }	// 3라운드 : 3 Live, 2 Blank
+			{ 3, 2 },	// 3라운드 : 3 Live, 2 Blank
+			{ 4, 4 },	// 4라운드 : 4 Live, 4 Blank
+			{ 5, 5 }	// 5라운드 : 5 Live, 5 Blank
 		};
 		AllMatches.Add(Match);
 	}
@@ -463,31 +467,6 @@ void ABRGameMode::SetupItemsForRound(int32 MatchIdx, int32 RoundIdx)
 			CurrentRoundItems.Add(Pool[idx]);
 			Pool.RemoveAt(idx); // 중복 방지
 		}
-
-		/*if (RoundIdx == 0)
-		{
-			for (int i = 0; i < 3; ++i)
-			{
-				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
-				CurrentRoundItems.Add(Pool[idx]);
-			}
-		}
-		else if (RoundIdx == 1)
-		{
-			for (int i = 0; i < 3; ++i)
-			{
-				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
-				CurrentRoundItems.Add(Pool[idx]);
-			}
-		}
-		else if (RoundIdx == 2)
-		{
-			for (int i = 0; i < 3; ++i)
-			{
-				int32 idx = FMath::RandRange(0, Pool.Num() - 1);
-				CurrentRoundItems.Add(Pool[idx]);
-			}
-		}*/
 	}
 }
 
