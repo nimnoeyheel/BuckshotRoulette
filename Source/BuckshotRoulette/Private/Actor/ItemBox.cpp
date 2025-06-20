@@ -56,6 +56,7 @@ void AItemBox::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	DOREPLIFETIME(AItemBox, OwningPlayer);
 	DOREPLIFETIME(AItemBox, PendingItems);
 	DOREPLIFETIME(AItemBox, CurrentItemIdx);
+	DOREPLIFETIME(AItemBox, bIsSpawningItem);
 }
 
 // Called every frame
@@ -87,6 +88,9 @@ void AItemBox::OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPr
 	APlayerController* MyPC = UGameplayStatics::GetPlayerController(this, 0);
 	if (MyPC != OwningPlayer) return;
 
+	// 아이템이 Attach되기 전까지 클릭 방지
+	if (bIsSpawningItem) return;
+
 	Server_OnBoxClicked();
 }
 
@@ -98,6 +102,7 @@ void AItemBox::Server_OnBoxClicked_Implementation()
 		EItemType NextItem = PendingItems[CurrentItemIdx];
 		if (BoardOwner)
 		{
+			bIsSpawningItem = true;
 			++CurrentItemIdx;
 			bIsLastItem = CurrentItemIdx >= PendingItems.Num() ? true : false;
 			BoardOwner->SpawnItem(NextItem, OwningPlayer, bIsLastItem);

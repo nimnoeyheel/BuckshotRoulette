@@ -123,6 +123,18 @@ void ABoard::OnSlotClicked(class USlotComponent* Slot, int32 SlotIdx, APlayerCon
 	Slot->AttachItem(Item); // 서버에서 실행하면 Replicated 자동 동기화
 	PendingItems.Remove(RequestingPlayer);
 
+	// 아이템박스 다시 클릭 가능하게
+	for (TActorIterator<AItemBox> It(GetWorld()); It; ++It)
+	{
+		AItemBox* Box = *It;
+		if (Box && Box->GetOwningPlayer() == RequestingPlayer)
+		{
+			Box->bIsSpawningItem = false;
+			break;
+		}
+	}
+
+	// 마지막 아이템일 때 박스 파괴
 	if (bIsLastItem && !PendingItems.Contains(RequestingPlayer))
 	{
 		for (TActorIterator<AItemBox> It(GetWorld()); It; ++It)

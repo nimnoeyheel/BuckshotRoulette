@@ -65,6 +65,9 @@ public:
 
 	bool bIsLastItem = false;
 
+	UPROPERTY(Replicated)
+	bool bIsSpawningItem = false;
+
 // 아이템 박스 외형
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UStaticMeshComponent* ItemBoxMesh;
