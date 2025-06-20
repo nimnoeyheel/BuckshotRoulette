@@ -31,10 +31,6 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UOverlay* Overlay_NicknameEntry;
-	
-// 플레이어 닉네임
-	//UFUNCTION()
-	//void UpdatePlayerNickname(const FString& Player1Nick, const FString& Player2Nick);
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Txt_Player1;

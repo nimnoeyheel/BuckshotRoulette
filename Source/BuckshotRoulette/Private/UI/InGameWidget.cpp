@@ -39,12 +39,6 @@ void UInGameWidget::HideNicknameEntryWidget()
 	SetVisibleOverlay(Overlay_NicknameEntry, false);
 }
 
-//void UInGameWidget::UpdatePlayerNickname(const FString& Player1Nick, const FString& Player2Nick)
-//{
-//	Txt_Player1->SetText(FText::FromString(Player1Nick));
-//	Txt_Player2->SetText(FText::FromString(Player2Nick));
-//}
-
 void UInGameWidget::UpdateTurnNickname(const FString& Nickname)
 {
 	if (Txt_TurnPlayerName) Txt_TurnPlayerName->SetText(FText::FromString(Nickname));

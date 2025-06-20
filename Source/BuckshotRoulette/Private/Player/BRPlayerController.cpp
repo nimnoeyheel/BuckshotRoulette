@@ -145,11 +145,21 @@ void ABRPlayerController::OnUpdateNewRound()
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	if (!GS || !MainUI || !MainUI->InGameUI) return;
 
-	// PlayerState에서 닉네임 가져오기 (자기 기준으로)
-	TArray<APlayerState*> Players = GS->PlayerArray;
-	FString Player1Nick = Players[0]->GetPlayerName();
-	FString Player2Nick = Players[1]->GetPlayerName();
-	UE_LOG(LogTemp, Log, TEXT("Player1[%s], Player2[%s]"), *Player1Nick, *Player2Nick);
+	FString Player1Nick, Player2Nick;
+	for (APlayerState* PS : GS->PlayerArray)
+	{
+		ABRPlayerState* BPS = Cast<ABRPlayerState>(PS);
+		if (!BPS) continue;
+
+		if (BPS->PlayerIndex == 1)
+		{
+			Player1Nick = BPS->GetPlayerName(); // 서버
+		}
+		else if (BPS->PlayerIndex == 2)
+		{
+			Player2Nick = BPS->GetPlayerName(); // 클라
+		}
+	}
 
 	MainUI->InGameUI->UpdateNewRound(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->NumLive, GS->NumBlank);
 }
