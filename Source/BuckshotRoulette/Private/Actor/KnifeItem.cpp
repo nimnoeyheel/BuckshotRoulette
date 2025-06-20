@@ -10,9 +10,12 @@
 
 AKnifeItem::AKnifeItem()
 {
-	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
-	RootComponent = OverlapBox;
+	RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
+	RootComponent = RootScene;
 
+	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
+	OverlapBox->SetupAttachment(RootComponent);
+	OverlapBox->SetIsReplicated(false);
 	OverlapBox->SetBoxExtent(FVector(40, 32, 25)); // (X=40.000000,Y=32.000000,Z=25.000000)
 	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
@@ -33,6 +36,7 @@ void AKnifeItem::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
 	OverlapBox->SetWorldLocation(Loc);
@@ -45,6 +49,7 @@ void AKnifeItem::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
 	OverlapBox->SetWorldLocation(Loc);
@@ -57,6 +62,7 @@ void AKnifeItem::OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPre
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	ServerRPC_UseItem();
 }

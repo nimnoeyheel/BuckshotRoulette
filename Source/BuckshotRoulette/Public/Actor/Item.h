@@ -54,6 +54,14 @@ public:
 	UPROPERTY(Replicated)
 	class APlayerController* OwningPlayer = nullptr;
 
+// 호버 기능 제어
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void Multicast_SetItemsInteractionEnabled(bool bEnabled);
+
+protected:
+	UPROPERTY(Replicated)
+	bool bIsInteractive = true;
+
 // PlaceHolderMesh
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	//UStaticMeshComponent* PlaceHolderMesh;

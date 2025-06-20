@@ -119,7 +119,6 @@ void ABRGameMode::PickFirstPlayer()
 	if (GS)
 	{
 		GS->SetTurnPlayer(AllPlayers[FirstIdx]);
-
 		UE_LOG(LogTemp, Log, TEXT("TurnPlayer: %s"), *AllPlayers[FirstIdx]->GetPlayerName());
 
 		// 턴이 정해지면 게임 시작

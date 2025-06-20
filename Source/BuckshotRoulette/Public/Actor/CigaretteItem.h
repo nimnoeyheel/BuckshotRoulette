@@ -40,6 +40,9 @@ protected:
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	//class USkeletalMeshComponent* CigaretteMesh;
 	//class UStaticMeshComponent* CigaretteMesh;
+	
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* RootScene;
 
 	// 오버랩 영역 (상호작용)
 	UPROPERTY(VisibleAnywhere)

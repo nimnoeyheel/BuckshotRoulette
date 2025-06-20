@@ -49,6 +49,7 @@ void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
    DOREPLIFETIME(AItem, OwningPlayer);
    DOREPLIFETIME(AItem, BoardOwner);
+   DOREPLIFETIME(AItem, bIsInteractive);
 }
 
 void AItem::UseItem()
@@ -69,11 +70,14 @@ bool AItem::IsOwnedByLocalPlayer() const
 	if (!PC || !BoardOwner) return false;
 
 	// 슬롯 인덱스 추출
-	int32 SlotIdx = BoardOwner->SlotAttachedItems.Find(const_cast<AItem*>(this));
-	if (!BoardOwner->SlotOwners.IsValidIndex(SlotIdx)) return false;
+	int32 SlotIdx = BoardOwner->GetSlotAttachedItems().Find(const_cast<AItem*>(this));
+	if (!BoardOwner->GetSlotOwners().IsValidIndex(SlotIdx)) return false;
 
 	// 슬롯 소유자가 내 PlayerState와 같은지 비교
-	return BoardOwner->SlotOwners[SlotIdx] == PC->PlayerState;
+	return BoardOwner->GetSlotOwners()[SlotIdx] == PC->PlayerState;
 }
 
-
+void AItem::Multicast_SetItemsInteractionEnabled_Implementation(bool bEnabled)
+{
+	bIsInteractive = bEnabled;
+}

@@ -8,6 +8,7 @@
 #include "Actor/Board.h"
 #include "Actor/Shotgun.h"
 #include "EngineUtils.h"
+#include "Actor/Item.h"
 
 // Sets default values
 ABRCharacter::ABRCharacter()
@@ -123,6 +124,16 @@ void ABRCharacter::TriggerAttackAnim()
 		{
 			PlayerAnimState = EPlayerAnimState::Idle;
 			AttachShotgunToBoard();
+
+			// 마우스 호버 허용
+			if (ShotgunActor) ShotgunActor->Multicast_SetInteractionEnabled(true);
+
+			TArray<AItem*> MyItems;
+			GetOwnedItems(MyItems);
+			for (AItem* Item : MyItems)
+			{
+				if (Item) Item->Multicast_SetItemsInteractionEnabled(true);
+			}
 		}
 	), 2.5f, false);
 }
@@ -148,6 +159,16 @@ void ABRCharacter::TriggerDamageAnim()
 		FTimerDelegate::CreateLambda([&]()
 		{
 			PlayerAnimState = EPlayerAnimState::Idle;
+
+			// 마우스 호버 허용
+			if (ShotgunActor) ShotgunActor->Multicast_SetInteractionEnabled(true);
+
+			TArray<AItem*> MyItems;
+			GetOwnedItems(MyItems);
+			for (AItem* Item : MyItems)
+			{
+				if (Item) Item->Multicast_SetItemsInteractionEnabled(true);
+			}
 		}
 	), 3.f, false);
 }
@@ -173,6 +194,39 @@ void ABRCharacter::TriggerDeathAnim()
 		FTimerDelegate::CreateLambda([&]()
 		{
 			PlayerAnimState = EPlayerAnimState::Idle;
+
+			// 마우스 호버 허용
+			if (ShotgunActor) ShotgunActor->Multicast_SetInteractionEnabled(true);
+
+			TArray<AItem*> MyItems;
+			GetOwnedItems(MyItems);
+			for (AItem* Item : MyItems)
+			{
+				if (Item) Item->Multicast_SetItemsInteractionEnabled(true);
+			}
 		}
 	), 1.96f, false);
+}
+
+void ABRCharacter::GetOwnedItems(TArray<class AItem*>& OutItems) const
+{
+	OutItems.Empty();
+	if (!BoardActor) return;
+
+	APlayerState* MyPS = GetPlayerState<APlayerState>();
+	if (!MyPS) return;
+
+	const TArray<AItem*>& AllItems = BoardActor->GetSlotAttachedItems();
+	const TArray<APlayerState*>& AllOwners = BoardActor->GetSlotOwners();
+
+	for (int32 i = 0; i < AllItems.Num(); ++i)
+	{
+		if (AllOwners.IsValidIndex(i) && AllItems.IsValidIndex(i))
+		{
+			if (AllOwners[i] == MyPS && AllItems[i] != nullptr)
+			{
+				OutItems.Add(AllItems[i]);
+			}
+		}
+	}
 }

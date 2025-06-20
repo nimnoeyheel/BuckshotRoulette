@@ -28,6 +28,7 @@ AHandcuffItem::AHandcuffItem()
 		HandcuffMesh->SetupAttachment(RootComponent);
 		HandcuffMesh->SetRelativeLocation(FVector(38, 13, 2)); // (X=38.000000,Y=13.000000,Z=2.000000)
 		HandcuffMesh->SetRelativeRotation(FRotator(90, 0, 0)); // (Pitch=90.000000,Yaw=0.000000,Roll=0.000000)
+		HandcuffMesh->SetIsReplicated(false);
 	}
 
 	//RootComponent = HandcuffMesh;
@@ -50,6 +51,7 @@ void AHandcuffItem::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
 	OverlapBox->SetWorldLocation(Loc);
@@ -62,6 +64,7 @@ void AHandcuffItem::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
 	OverlapBox->SetWorldLocation(Loc);
@@ -74,6 +77,7 @@ void AHandcuffItem::OnClicked(UPrimitiveComponent* TouchedComponent, FKey Button
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	ServerRPC_UseItem();
 }

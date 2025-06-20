@@ -23,7 +23,12 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* RootScene;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class USkeletalMeshComponent* ShotgunMesh;
 
@@ -40,6 +45,19 @@ protected:
     UFUNCTION()
     void OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
 
+// 애니메이션 실행 시 호버 기능 방지
+	UPROPERTY(Replicated)
+	bool bIsInteractive = true;
+
+	UPROPERTY()
+	class ABRCharacter* OwningCharacter = nullptr;
+
+public:
+	void SetOwningCharacter(ABRCharacter* Char) { OwningCharacter = Char; }
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetInteractionEnabled(bool bEnabled);
+
 public:
 // Self Fire
 	UFUNCTION(NetMulticast, Reliable)
@@ -47,4 +65,5 @@ public:
 
 	UFUNCTION()
 	void SetAnimBPsFiringValue(const FString VarName);
+
 };

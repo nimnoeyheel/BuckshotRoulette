@@ -96,7 +96,6 @@ void AItemBox::OnBoxClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPr
 
 void AItemBox::Server_OnBoxClicked_Implementation()
 {
-	// 아이템이 스폰되고 SlotComp에 Attach되기 전까지 클릭 방지
 	if (PendingItems.IsValidIndex(CurrentItemIdx))
 	{
 		EItemType NextItem = PendingItems[CurrentItemIdx];

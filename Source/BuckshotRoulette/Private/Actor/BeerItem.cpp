@@ -31,6 +31,7 @@ ABeerItem::ABeerItem()
 		BeerMesh->SetStaticMesh(BeerMeshAsset.Object);
 		BeerMesh->SetupAttachment(RootComponent);
 		BeerMesh->SetRelativeLocation(FVector(0, 3.5, -1.5)); // (X=0.000000,Y=3.500000,Z=-1.500000)
+		BeerMesh->SetIsReplicated(false);
 	}
 
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
@@ -52,6 +53,7 @@ void ABeerItem::OnBeginMouseOver(UPrimitiveComponent* TouchedComponent)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, 5);
 	OverlapBox->SetWorldLocation(Loc);
@@ -64,6 +66,7 @@ void ABeerItem::OnEndMouseOver(UPrimitiveComponent* TouchedComponent)
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->MainUI || !PC->MainUI->InGameUI || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	FVector Loc = GetActorLocation() + FVector(0, 0, -5);
 	OverlapBox->SetWorldLocation(Loc);
@@ -76,6 +79,7 @@ void ABeerItem::OnClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPres
 	ABRPlayerController* PC = Cast<ABRPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC || !PC->IsMyTurn()) return;
 	if (!IsOwnedByLocalPlayer()) return; // 슬롯 소유자 체크
+	if (!bIsInteractive) return;
 
 	ServerRPC_UseItem();
 }

@@ -69,6 +69,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category="Anim")
 	EPlayerAnimState PlayerAnimState = EPlayerAnimState::Idle;
 
+// 소유한 아이템
+	void GetOwnedItems(TArray<class AItem*>& OutItems) const;
+
 // 카메라
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	class UCameraComponent* CameraComp;

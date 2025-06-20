@@ -37,6 +37,9 @@ protected:
 	UPROPERTY()
 	EItemType ItemType = EItemType::Magnifier; 
 
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* RootScene;
+
 	// 오버랩 영역 (상호작용)
 	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* OverlapBox;

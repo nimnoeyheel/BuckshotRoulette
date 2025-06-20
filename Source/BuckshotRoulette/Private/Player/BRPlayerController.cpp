@@ -15,6 +15,7 @@
 #include "Actor/Shotgun.h"
 #include "Actor/SlotComponent.h"
 #include "Actor/Board.h"
+#include "Actor/Item.h"
 
 ABRPlayerController::ABRPlayerController()
 {
@@ -121,7 +122,7 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	if (!GS) return;
 
 	// 턴플레이어가 null이면 모두 활성화
-	if (GS->TurnPlayer == nullptr)
+	if (GS->TurnPlayer == nullptr) 
 	{
 		SetInputEnable(true);
 		return;
@@ -135,7 +136,8 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	MainUI->InGameUI->UpdateTurnNickname(Nick);
 
 	// 내 턴인지 확인 후 입력 제어
-	SetInputEnable(TurnPlayerState == PlayerState);
+	bool bMyTurn = (TurnPlayerState == PlayerState);
+	SetInputEnable(bMyTurn);
 }
 
 void ABRPlayerController::OnUpdateNewRound()
@@ -217,6 +219,9 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	PS->ShotsFired++;
 	PS->ShellsEjected++;
 	PS->TotalCash += (PS->ShotsFired * 100) + (PS->ShellsEjected * 100);
+
+	// Shotgun&Items 마우스 호버 제어
+	SetMouseInteractionEnable(false);
 
 	// FiringPlayerIndex 구하기
 	int32 FiringPlayerIndex = PS->PlayerIndex;
@@ -506,6 +511,35 @@ void ABRPlayerController::OnGameOver(ABRPlayerState* Winner)
 		MainUI->ResultUI->SetLoserNickname(PS->GetPlayerName());
 	}
 	MainUI->ShowResult(bIsWinner);
+}
+
+void ABRPlayerController::SetMouseInteractionEnable(bool bEnabled)
+{
+	if (APawn* MyPawn = GetPawn())
+	{
+		ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn);
+		if (MyChar && MyChar->GetShotgunActor())
+		{
+			if (AShotgun* Shotgun = Cast<AShotgun>(MyChar->GetShotgunActor()))
+			{
+				// 마우스 오버 잠금
+				Shotgun->SetOwningCharacter(MyChar);
+				Shotgun->Multicast_SetInteractionEnabled(bEnabled);
+			}
+
+			// Item 처리
+			TArray<AItem*> MyItems;
+			MyChar->GetOwnedItems(MyItems); // 소유한 아이템 리스트 가져오기
+
+			for (AItem* Item : MyItems)
+			{
+				if (Item)
+				{
+					Item->Multicast_SetItemsInteractionEnabled(bEnabled);
+				}
+			}
+		}
+	}
 }
 
 void ABRPlayerController::ClientRPC_ShowCurrentAmmo_Implementation(EAmmoType AmmoType)

@@ -86,6 +86,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_ShowCurrentAmmo(EAmmoType AmmoType);
 
+// 마우스 호버 제어
+	UFUNCTION()
+	void SetMouseInteractionEnable(bool bEnabled);
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<class UMainWidget> MainWidgetClass;

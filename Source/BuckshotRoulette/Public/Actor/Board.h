@@ -57,21 +57,27 @@ public:
 
 	UPROPERTY()
 	bool bIsLastItem = false;
-	
-	// 슬롯 오너 할당 함수
-	void SetSlotOwner(int32 SlotIdx, APlayerState* PS);
-	void SetSlotAttachedItem(int32 SlotIdx, class AItem* Item);
 
 	UFUNCTION()
 	void OnRep_SlotOwners();
 	UFUNCTION()
 	void OnRep_SlotAttachedItems();
 
+	// SlotOwners & SlotAttachedItems Getter
+	const TArray<AItem*>& GetSlotAttachedItems() const { return SlotAttachedItems; }
+	const TArray<APlayerState*>& GetSlotOwners() const { return SlotOwners; }
+
+	// SlotOwners & SlotAttachedItems Setter
+	void SetSlotOwner(int32 SlotIdx, APlayerState* PS);
+	void SetSlotAttachedItem(int32 SlotIdx, class AItem* Item);
+
+protected:
 	UPROPERTY(ReplicatedUsing = OnRep_SlotOwners)
 	TArray<APlayerState*> SlotOwners;
 	UPROPERTY(ReplicatedUsing = OnRep_SlotAttachedItems)
 	TArray<class AItem*> SlotAttachedItems;
 
+public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<class USlotComponent*> SlotComponents;
 };

@@ -68,12 +68,6 @@ void ABRGameState::OnRep_TurnPlayer()
 			PC->OnTurnPlayerChanged();
 		}
 	}
-
-	/*ABRPlayerController* PC = Cast<ABRPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-	if (PC)
-	{
-		PC->OnTurnPlayerChanged();
-	}*/
 }
 
 void ABRGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
