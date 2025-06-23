@@ -69,6 +69,9 @@ public:
 	// 게임 종료
 	void OnGameOver(class ABRPlayerState* Winner);
 
+	// 턴 플레이어 초기화
+	void ResetTurnForItemPhase();
+
 	// 마지막 턴 플레이어 저장
 	UPROPERTY()
 	APlayerState* LastTurnPlayer = nullptr;

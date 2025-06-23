@@ -188,9 +188,9 @@ void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
 				NumActiveItemBoxes++; // 박스 스폰 시마다 1씩 증가
 			}
 		}
+
 		// 턴플레이어는 null로 초기화(아이템 준비 끝날때까지)
-		ABRGameState* GS = GetGameState<ABRGameState>();
-		if (GS) GS->SetTurnPlayer(nullptr);
+		ResetTurnForItemPhase();
 	}
 }
 
@@ -308,6 +308,15 @@ void ABRGameMode::OnGameOver(class ABRPlayerState* Winner)
 			ABRGameState* GS = Cast<ABRGameState>(GameState);
 			if (GS) GS->Multicast_OnGameOver(Winner);
 		}
+	}
+}
+
+void ABRGameMode::ResetTurnForItemPhase()
+{
+	if (ABRGameState* GS = GetGameState<ABRGameState>())
+	{
+		GS->SetTurnPlayer(nullptr);
+		UE_LOG(LogTemp, Warning, TEXT("TurnPlayer Reset for Item Setup Phase"));
 	}
 }
 

@@ -59,14 +59,12 @@ void ABRGameState::Multicast_OnGameOver_Implementation(ABRPlayerState* Winner/*,
 
 void ABRGameState::OnRep_TurnPlayer()
 {
-	// 모든 PlayerController에 턴 정보 업데이트 알림
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	ABRPlayerController* PC = Cast<ABRPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	if (PC)
 	{
-		ABRPlayerController* PC = Cast<ABRPlayerController>(It->Get());
-		if (PC && PC->IsLocalController())
-		{
-			PC->OnTurnPlayerChanged();
-		}
+		//const FString RoleStr = PC->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT");
+		//UE_LOG(LogTemp, Log, TEXT("GS::OnRep_TurnPlayer | PC Name is %s | ROLE = %s"), *PC->GetName(), *RoleStr);
+		PC->OnTurnPlayerChanged();
 	}
 }
 
