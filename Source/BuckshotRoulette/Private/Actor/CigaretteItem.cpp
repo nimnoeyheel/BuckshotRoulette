@@ -11,23 +11,6 @@
 
 ACigaretteItem::ACigaretteItem()
 {
-	//CigaretteMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CigaretteMesh"));
-	//RootComponent = CigaretteMesh;
-
-	//static ConstructorHelpers::FObjectFinder<UStaticMesh> CigaretteMeshAsset(TEXT("/Game/KJM/Asset/Item/Retopo_Close_Cigarette_Down.Retopo_Close_Cigarette_Down"));
-	//if (CigaretteMeshAsset.Object)
-	//{
-	//	//CigaretteMesh->SetSkeletalMesh(CigaretteMeshAsset.Object);
-	//	CigaretteMesh->SetStaticMesh(CigaretteMeshAsset.Object);
-	//	CigaretteMesh->SetRelativeScale3D(FVector(0.15, 0.2, 0.05));
-	//}
-
-	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
-	if (AnimPath.Class)
-	{
-		CigaretteMesh->SetAnimInstanceClass(AnimPath.Class);
-	}*/
-
 	RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
 	RootComponent = RootScene;
 

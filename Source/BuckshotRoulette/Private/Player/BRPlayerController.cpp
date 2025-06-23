@@ -269,7 +269,10 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 
 		if (FiredAmmo == EAmmoType::Live)
 		{
-			AttackDamage(MyState);
+			// 내 턴에 나를 쐈다면
+			if (MyState == GS->TurnPlayer) AttackDamage(MyState, MyState);
+			// 상대가 나를 쐈다면
+			else AttackDamage(OpponentState, MyState);
 			
 			// Damage Anim
 			TriggerDamageAnim(MyState);
@@ -331,7 +334,10 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 
 		if (FiredAmmo == EAmmoType::Live)
 		{
-			AttackDamage(OpponentState);
+			// 내 턴에 상대를 쐈다면
+			if (MyState == GS->TurnPlayer) AttackDamage(MyState, OpponentState);
+			// 상대가 자기 자신을 쐈다면
+			else AttackDamage(OpponentState, OpponentState);
 
 			// Damage Anim
 			TriggerDamageAnim(OpponentState);
@@ -397,14 +403,16 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 	}
 }
 
-void ABRPlayerController::AttackDamage(ABRPlayerState* PS)
+void ABRPlayerController::AttackDamage(ABRPlayerState* FiredPlayer, ABRPlayerState* TargetPlayer)
 {
-	if (PS && PS->IsKnifeEffectPending())
+	UE_LOG(LogTemp, Log, TEXT("[KNIFE] %s's knife effect pening is %s"), *FiredPlayer->GetPlayerName(), FiredPlayer->IsKnifeEffectPending() ? TEXT("TRUE") : TEXT("FALSE"));
+
+	if (TargetPlayer && FiredPlayer && FiredPlayer->IsKnifeEffectPending())
 	{
-		PS->SetKnifeEffectPending(false); // 사용 후 초기화
-		PS->Hp -= 2;
+		FiredPlayer->SetKnifeEffectPending(false); // 사용 후 초기화
+		TargetPlayer->Hp -= 2;
 	}
-	else PS->Hp--;
+	else TargetPlayer->Hp--;
 
 	OnUpdateHp();
 }

@@ -50,7 +50,7 @@ public:
 	void OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo);
 
 	UFUNCTION()
-	void AttackDamage(class ABRPlayerState* PS);
+	void AttackDamage(class ABRPlayerState* FiredPlayer, class ABRPlayerState* TargetPlayer);
 
 // 애니메이션
 	UFUNCTION()

@@ -10,9 +10,12 @@
 
 AHandcuffItem::AHandcuffItem()
 {
-	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
-	RootComponent = OverlapBox;
+	RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
+	RootComponent = RootScene;
 
+	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
+	OverlapBox->SetupAttachment(RootComponent);
+	OverlapBox->SetIsReplicated(false);
 	OverlapBox->SetBoxExtent(FVector(55, 40, 20)); // (X=55.000000,Y=40.000000,Z=20.000000)
 	OverlapBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapBox->SetCollisionObjectType(ECC_WorldDynamic);
@@ -28,7 +31,6 @@ AHandcuffItem::AHandcuffItem()
 		HandcuffMesh->SetupAttachment(RootComponent);
 		HandcuffMesh->SetRelativeLocation(FVector(38, 13, 2)); // (X=38.000000,Y=13.000000,Z=2.000000)
 		HandcuffMesh->SetRelativeRotation(FRotator(90, 0, 0)); // (Pitch=90.000000,Yaw=0.000000,Roll=0.000000)
-		HandcuffMesh->SetIsReplicated(false);
 	}
 
 	//RootComponent = HandcuffMesh;

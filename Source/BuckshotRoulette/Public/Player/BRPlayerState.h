@@ -52,7 +52,7 @@ public:
 	void OnRep_KnifeEffectPending();
 	UPROPERTY(ReplicatedUsing = OnRep_KnifeEffectPending)
 	bool bKnifeEffectPending = false;
-	void SetKnifeEffectPending(bool b) { bKnifeEffectPending  = b; }
+	void SetKnifeEffectPending(bool b) { bKnifeEffectPending = b; }
 	bool IsKnifeEffectPending() const { return bKnifeEffectPending; }
 
 // WinnerData : 위너 UI만 반영

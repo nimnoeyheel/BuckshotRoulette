@@ -36,9 +36,11 @@ public:
 protected:
 	UPROPERTY()
 	EItemType ItemType = EItemType::Handcuff; 
+	
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* RootScene;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//class USkeletalMeshComponent* HandcuffMesh;
 	class UStaticMeshComponent* HandcuffMesh;
 
 	// 오버랩 영역 (상호작용)
