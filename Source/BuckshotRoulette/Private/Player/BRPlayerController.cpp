@@ -207,6 +207,7 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 
 	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
 
+	// 디버깅용
 	FString AmmoType;
 	switch (FiredAmmo)
 	{
