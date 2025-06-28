@@ -23,6 +23,9 @@ protected:
 	virtual void SetupInputComponent() override;
 
 public:
+// 플레이어 인덱스 찾기
+	ABRPlayerState* FindPlayerStateByIndex(int32 Index);
+
 // 턴 시스템
 	bool IsMyTurn();
 

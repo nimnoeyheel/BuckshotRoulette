@@ -104,7 +104,12 @@ void ABRGameMode::TryStartGameIfReady()
 		}
 	}
 	// 2명 모두 닉네임 입력 완료 시 선공 플레이어 랜덤 결정
-	if (ReadyCount == 2) PickFirstPlayer();
+	//if (ReadyCount == 2) PickFirstPlayer();
+	if (ReadyCount == 2)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Both players entered nickname. Starting game."));
+		PickFirstPlayer();  // 이게 initializeGame() 호출함
+	}
 }
 
 void ABRGameMode::PickFirstPlayer()
@@ -159,8 +164,11 @@ void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
 	SetupItemsForRound(MatchIdx, RoundIdx);
 
 	// 매치2부터 아이템 시스템 시작
-	if (MatchIdx >= 1 /*&& !ItemBox*/)
+	if (MatchIdx >= 1)
 	{
+		// 턴플레이어는 null로 초기화(아이템 준비 끝날때까지)
+		ResetTurnForItemPhase();
+
 		NumActiveItemBoxes = 0;
 
 		TArray<APlayerController*> PCs;
@@ -188,9 +196,6 @@ void ABRGameMode::StartRound(int32 MatchIdx, int32 RoundIdx)
 				NumActiveItemBoxes++; // 박스 스폰 시마다 1씩 증가
 			}
 		}
-
-		// 턴플레이어는 null로 초기화(아이템 준비 끝날때까지)
-		ResetTurnForItemPhase();
 	}
 }
 

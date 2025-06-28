@@ -6,21 +6,19 @@
 #include "Game/BRGameMode.h"
 #include "Player/BRPlayerController.h"
 #include "Game/BRGameState.h"
+#include "UI/MainWidget.h"
+#include "UI/InGameWidget.h"
 
 void ABRPlayerState::ServerRPC_SetPlayerName_Implementation(const FString& NewName)
 {
 	SetPlayerName(NewName);
 	bNicknameEntered = true;
 
+	UE_LOG(LogTemp, Warning, TEXT("Nickname set to %s"), *NewName);
+
 	// GameMode에서 서버-클라 모두 닉네임 입력했는지 확인 요청
-	if (GetWorld())
-	{
-		ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
-		if (GM)
-		{
-			GM->TryStartGameIfReady();
-		}
-	}
+	ABRGameMode* GM = Cast<ABRGameMode>(GetWorld()->GetAuthGameMode());
+	if (GM) GM->TryStartGameIfReady();
 }
 
 bool ABRPlayerState::ServerRPC_SetPlayerName_Validate(const FString& NewName)
@@ -43,6 +41,11 @@ void ABRPlayerState::OnRep_Hp()
 		if (PC && PC->IsLocalController())
 		{
 			PC->OnUpdateHp();
+
+			if (Hp <= 0)
+			{
+				PC->TriggerDeathAnim(this); // 죽는 연출은 여기서 해도 안전함
+			}
 		}
 	}
 }

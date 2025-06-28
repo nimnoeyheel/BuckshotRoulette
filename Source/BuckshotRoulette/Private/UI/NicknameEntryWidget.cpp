@@ -49,7 +49,7 @@ void UNicknameEntryWidget::OnEntryButtonClicked()
         return;
     }
 
-    APlayerController* PC = GetOwningPlayer();
+    APlayerController* PC = Cast<ABRPlayerController>(GetOwningPlayer());
     if (PC && PC->PlayerState)
     {
         ABRPlayerState* PS = Cast<ABRPlayerState>(PC->PlayerState);

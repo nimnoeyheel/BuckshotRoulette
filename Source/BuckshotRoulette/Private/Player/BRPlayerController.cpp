@@ -85,6 +85,24 @@ void ABRPlayerController::SetupInputComponent()
 	
 }
 
+ABRPlayerState* ABRPlayerController::FindPlayerStateByIndex(int32 Index)
+{
+	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	if (!GS) return nullptr;
+
+	for (APlayerState* PS : GS->PlayerArray)
+	{
+		if (ABRPlayerState* BPS = Cast<ABRPlayerState>(PS))
+		{
+			if (BPS->PlayerIndex == Index)
+			{
+				return BPS;
+			}
+		}
+	}
+	return nullptr;
+}
+
 bool ABRPlayerController::IsMyTurn()
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
@@ -125,6 +143,7 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	if (GS->TurnPlayer == nullptr) 
 	{
 		SetInputEnable(true);
+		SetMouseInteractionEnable(true); // 마우스 입력도 강제로 활성화
 		return;
 	}
 
@@ -136,8 +155,7 @@ void ABRPlayerController::OnTurnPlayerChanged()
 	MainUI->InGameUI->UpdateTurnNickname(Nick);
 
 	// 내 턴인지 확인 후 입력 제어
-	bool bMyTurn = (TurnPlayerState == PlayerState);
-	SetInputEnable(bMyTurn);
+	SetInputEnable(TurnPlayerState == PlayerState);
 }
 
 void ABRPlayerController::OnUpdateNewRound()
@@ -145,23 +163,22 @@ void ABRPlayerController::OnUpdateNewRound()
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	if (!GS || !MainUI || !MainUI->InGameUI) return;
 
-	FString Player1Nick, Player2Nick;
-	for (APlayerState* PS : GS->PlayerArray)
-	{
-		ABRPlayerState* BPS = Cast<ABRPlayerState>(PS);
-		if (!BPS) continue;
+	ABRPlayerState* P1 = FindPlayerStateByIndex(1);
+	ABRPlayerState* P2 = FindPlayerStateByIndex(2);
 
-		if (BPS->PlayerIndex == 1)
-		{
-			Player1Nick = BPS->GetPlayerName(); // 서버
-		}
-		else if (BPS->PlayerIndex == 2)
-		{
-			Player2Nick = BPS->GetPlayerName(); // 클라
-		}
-	}
+	FString Player1Nick = P1 ? P1->GetPlayerName() : TEXT("Unknown1");
+	FString Player2Nick = P2 ? P2->GetPlayerName() : TEXT("Unknown2");
 
-	MainUI->InGameUI->UpdateNewRound(GS->MatchIdx, GS->RoundIdx, Player1Nick, Player2Nick, GS->NumLive, GS->NumBlank);
+	UE_LOG(LogTemp, Warning, TEXT("OnUpdateNewRound: Player1[%s], Player2[%s]"), *Player1Nick, *Player2Nick);
+
+	MainUI->InGameUI->UpdateNewRound(
+		GS->MatchIdx, 
+		GS->RoundIdx, 
+		Player1Nick, 
+		Player2Nick, 
+		GS->NumLive, 
+		GS->NumBlank
+	);
 }
 
 void ABRPlayerController::OnUpdateHp()
@@ -171,14 +188,11 @@ void ABRPlayerController::OnUpdateHp()
 
 	TArray<APlayerState*> Players = GS->PlayerArray;
 
-	int32 Player1Hp = -1;
-	int32 Player2Hp = -1;
-	for(APlayerState* PS : Players)
-	{
-		ABRPlayerState* BPS = Cast<ABRPlayerState>(PS);
-		if (BPS->PlayerIndex == 1) Player1Hp = BPS->Hp;
-		if (BPS->PlayerIndex == 2) Player2Hp = BPS->Hp;
-	}
+	ABRPlayerState* P1 = FindPlayerStateByIndex(1);
+	ABRPlayerState* P2 = FindPlayerStateByIndex(2);
+
+	int32 Player1Hp = P1 ? P1->Hp : -1;
+	int32 Player2Hp = P2 ? P2->Hp : -1;
 
 	// 모든 플레이어의 HP UI 업데이트
 	MainUI->InGameUI->UpdatePlayerHp(Player1Hp, Player2Hp);
@@ -193,8 +207,8 @@ void ABRPlayerController::OnTargetSelected(int32 TargetPlayerIndex)
 void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlayerIndex)
 {
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
-	ABRPlayerState* PS = Cast<ABRPlayerState>(PlayerState);
-	if (!GS || !PS) return;
+	ABRPlayerState* Attacker = Cast<ABRPlayerState>(PlayerState);
+	if (!GS || !Attacker) return;
 
 	if (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num())
 	{
@@ -202,10 +216,10 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 		return;
 	}
 
-	bool bIsLastAmmo = (GS->CurrentAmmoIndex == GS->AmmoSequence.Num() - 1);
-	UE_LOG(LogTemp, Log, TEXT("bIsLastAmmo = %s"), bIsLastAmmo ? TEXT("true") : TEXT("false"));
+	//const bool bIsLastAmmo = (GS->CurrentAmmoIndex == GS->AmmoSequence.Num() - 1);
+	//UE_LOG(LogTemp, Log, TEXT("bIsLastAmmo = %s"), bIsLastAmmo ? TEXT("true") : TEXT("false"));
 
-	EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
+	const EAmmoType FiredAmmo = GS->AmmoSequence[GS->CurrentAmmoIndex];
 
 	// 디버깅용
 	FString AmmoType;
@@ -227,185 +241,264 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	GS->CurrentAmmoIndex++;
 
 	// Winner Result Data 증가
-	PS->ShotsFired++;
-	PS->ShellsEjected++;
-	PS->TotalCash += (PS->ShotsFired * 100) + (PS->ShellsEjected * 100);
+	Attacker->ShotsFired++;
+	Attacker->ShellsEjected++;
+	Attacker->TotalCash += (Attacker->ShotsFired * 100) + (Attacker->ShellsEjected * 100);
 
 	// Shotgun&Items 마우스 호버 제어
 	SetMouseInteractionEnable(false);
 
 	// FiringPlayerIndex 구하기
-	int32 FiringPlayerIndex = PS->PlayerIndex;
+	const int32 FiringPlayerIndex = Attacker->PlayerIndex;
+	ABRPlayerState* Target = FindPlayerStateByIndex(TargetPlayerIndex + 1);
+	if (!Target) return;
+
+	// 연출용: 발사 애니메이션은 여기서 서버가 발사자에게만 호출
+	TriggerFireAnim(Attacker, TargetPlayerIndex);
+
+	// 2. 데미지 처리
+	if (Target && FiredAmmo == EAmmoType::Live)
+	{
+		Target->Hp -= Attacker->IsKnifeEffectPending() ? 2 : 1;
+		Attacker->SetKnifeEffectPending(false);
+		Target->OnRep_Hp();
+	}
+
+	// 3. 라운드 종료 조건 계산
+	const bool bIsTargetDead = Target->Hp <= 0;
+	const bool bIsLastAmmo = (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num());
+
+	// 4. 결과 연출 알림
+	GS->Multicast_FireResult(FiringPlayerIndex, TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
+
+	// 5. 라운드 흐름 제어 (서버 전용)
+	if (bIsTargetDead || bIsLastAmmo)
+	{
+		OnRoundEnd();
+	}
+	else
+	{
+		if (!TrySkipOpponentTurn(Attacker)) NextTurn();
+	}
+
 	// 공격 애니메이션
-	TriggerFireAnim(PS, TargetPlayerIndex);
+	//TriggerFireAnim(Attacker, TargetPlayerIndex);
 
 	// 결과를 모든 클라에 Multicast로 알림 => 서버의 클라2 PC와 클라2의 PC에서만 실행됨. 즉, 서버에서는 실행안됨.
 	// 그래서 GameState에서 모든 PC를 순회하면서 함수를 직접 호출
-	GS->Multicast_FireResult(FiringPlayerIndex, TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
+	//GS->Multicast_FireResult(FiringPlayerIndex, TargetPlayerIndex, FiredAmmo, bIsLastAmmo);
 }
 
 void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlayerIndex, EAmmoType FiredAmmo, bool bIsLastAmmo)
 {
-	bool bRoundOver = false;
-
 	ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
 	if (!GS || !MainUI || !MainUI->InGameUI) return;
 
-	TArray<APlayerState*> Players = GS->PlayerArray;
-	if (!Players.IsValidIndex(TargetPlayerIndex)) return;
-
 	ABRPlayerState* MyState = Cast<ABRPlayerState>(PlayerState);
-	ABRPlayerState* TargetState = Cast<ABRPlayerState>(Players[TargetPlayerIndex]);
-	ABRPlayerState* OpponentState = nullptr;
-	for (APlayerState* PS : Players)
-	{
-		if (PS != MyState) OpponentState = Cast<ABRPlayerState>(PS);
-	}
+	ABRPlayerState* TargetState = FindPlayerStateByIndex(TargetPlayerIndex + 1);
+	if (!MyState || !TargetState) return;
 
-	// 내가 타겟일 때
+	// 연출용: 내가 타겟일 때
 	if (MyState == TargetState)
 	{
-		// Self Fire Anim
 		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, MyState);
 
 		if (FiredAmmo == EAmmoType::Live)
 		{
-			// 내 턴에 나를 쐈다면
-			if (MyState == GS->TurnPlayer) AttackDamage(MyState, MyState);
-			// 상대가 나를 쐈다면
-			else AttackDamage(OpponentState, MyState);
-			
-			// Damage Anim
 			TriggerDamageAnim(MyState);
-
-			// 체력이 0이하라면
-			if (MyState->Hp <= 0)
-			{
-				// 해당 라운드 종료
-				bRoundOver = true;
-
-				// Death Anim
-				TriggerDeathAnim(MyState);
-			}
-			else if (HasAuthority())
-			{
-				// 내 턴에 나를 쐈다면
-				if (MyState == GS->TurnPlayer)
-				{
-					if (!TrySkipOpponentTurn(MyState)) NextTurn();
-				}
-				// 상대가 나를 쐈다면
-				else
-				{
-					if (!TrySkipOpponentTurn(OpponentState)) NextTurn();
-				}
-			}
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
 		{
-			if (HasAuthority())
-			{
-				// 내 턴에 나를 쐈다면
-				if (MyState == GS->TurnPlayer)
-				{
-					TrySkipOpponentTurn(MyState);
-
-					// Knife 효과 무효: 변수 초기화
-					MyState->SetKnifeEffectPending(false);
-				}
-				// 상대가 나를 쐈다면
-				else
-				{
-					if (!TrySkipOpponentTurn(OpponentState))
-					{
-						NextTurn();
-
-						// Knife 효과 무효: 변수 초기화
-						OpponentState->SetKnifeEffectPending(false);
-					}
-				}
-			}
+			// Blank 연출 필요 시 여기에 추가
 		}
 	}
 
-	// 상대가 타겟일 때
-	else if (OpponentState == TargetState)
+	// 연출용: 상대가 타겟일 때
+	else
 	{
-		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, OpponentState);
+		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, TargetState);
 
 		if (FiredAmmo == EAmmoType::Live)
 		{
-			// 내 턴에 상대를 쐈다면
-			if (MyState == GS->TurnPlayer) AttackDamage(MyState, OpponentState);
-			// 상대가 자기 자신을 쐈다면
-			else AttackDamage(OpponentState, OpponentState);
-
-			// Damage Anim
-			TriggerDamageAnim(OpponentState);
-
-			if (OpponentState->Hp <= 0)
-			{
-				// 해당 라운드 종료
-				bRoundOver = true;
-
-				// Death Anim
-				TriggerDeathAnim(OpponentState);
-			}
-			else if (HasAuthority())
-			{
-				// 내 턴에 상대를 쐈다면
-				if (MyState == GS->TurnPlayer)
-				{
-					if(!TrySkipOpponentTurn(MyState)) NextTurn();
-				}
-				// 상대가 자기 자신을 쐈으면
-				else
-				{
-					if(!TrySkipOpponentTurn(OpponentState)) NextTurn();
-				}
-			}
+			TriggerDamageAnim(TargetState);
 		}
 		else if (FiredAmmo == EAmmoType::Blank)
 		{
-			if (HasAuthority())
-			{
-				// 내 턴에 상대를 쐈다면
-				if (MyState == GS->TurnPlayer)
-				{
-					if (!TrySkipOpponentTurn(MyState))
-					{
-						NextTurn();
-
-						// Knife 효과 무효: 변수 초기화
-						MyState->SetKnifeEffectPending(false);
-					}
-				}
-				// 상대가 자기 자신을 쐈다면
-				else
-				{
-					TrySkipOpponentTurn(OpponentState);
-
-					// Knife 효과 무효: 변수 초기화
-					OpponentState->SetKnifeEffectPending(false);
-				}
-			}
+			// Blank 연출 필요 시 여기에 추가
 		}
 	}
-	
-	// 마지막 총알일 때 해당 라운드 종료
-	if (HasAuthority())
-	{
-		bool bIsAmmoEmpty = (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num());
-		if (bIsAmmoEmpty || bIsLastAmmo || bRoundOver)
-		{
-			bIsLastAmmo = false;
-			OnRoundEnd();
-		}
-	}
+
+
+	//bool bRoundOver = false;
+
+	//ABRGameState* GS = GetWorld()->GetGameState<ABRGameState>();
+	//if (!GS || !MainUI || !MainUI->InGameUI) return;
+
+	////TArray<APlayerState*> Players = GS->PlayerArray;
+	////if (!Players.IsValidIndex(TargetPlayerIndex)) return;
+
+	//ABRPlayerState* MyState = Cast<ABRPlayerState>(PlayerState);
+	//ABRPlayerState* TargetState = FindPlayerStateByIndex(TargetPlayerIndex + 1);
+	//ABRPlayerState* OpponentState = FindPlayerStateByIndex((TargetPlayerIndex + 1) == 1 ? 2 : 1);
+
+	////ABRPlayerState* TargetState = Cast<ABRPlayerState>(Players[TargetPlayerIndex]);
+	////ABRPlayerState* OpponentState = nullptr;
+	////for (APlayerState* PS : Players)
+	////{
+	////	if (PS != MyState) OpponentState = Cast<ABRPlayerState>(PS);
+	////}
+
+	//// 내가 타겟일 때
+	//if (MyState == TargetState)
+	//{
+	//	// Self Fire Anim
+	//	TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, MyState);
+
+	//	if (FiredAmmo == EAmmoType::Live)
+	//	{
+	//		// 내 턴에 나를 쐈다면
+	//		if (MyState == GS->TurnPlayer) AttackDamage(MyState, MyState);
+	//		// 상대가 나를 쐈다면
+	//		else AttackDamage(OpponentState, MyState);
+	//		
+	//		// Damage Anim
+	//		TriggerDamageAnim(MyState);
+
+	//		// 체력이 0이하라면
+	//		if (MyState->Hp <= 0)
+	//		{
+	//			// 해당 라운드 종료
+	//			bRoundOver = true;
+
+	//			// Death Anim
+	//			TriggerDeathAnim(MyState);
+	//		}
+	//		else if (HasAuthority())
+	//		{
+	//			// 내 턴에 나를 쐈다면
+	//			if (MyState == GS->TurnPlayer)
+	//			{
+	//				if (!TrySkipOpponentTurn(MyState)) NextTurn();
+	//			}
+	//			// 상대가 나를 쐈다면
+	//			else
+	//			{
+	//				if (!TrySkipOpponentTurn(OpponentState)) NextTurn();
+	//			}
+	//		}
+	//	}
+	//	else if (FiredAmmo == EAmmoType::Blank)
+	//	{
+	//		if (HasAuthority())
+	//		{
+	//			// 내 턴에 나를 쐈다면
+	//			if (MyState == GS->TurnPlayer)
+	//			{
+	//				TrySkipOpponentTurn(MyState);
+
+	//				// Knife 효과 무효: 변수 초기화
+	//				MyState->SetKnifeEffectPending(false);
+	//			}
+	//			// 상대가 나를 쐈다면
+	//			else
+	//			{
+	//				if (!TrySkipOpponentTurn(OpponentState))
+	//				{
+	//					NextTurn();
+
+	//					// Knife 효과 무효: 변수 초기화
+	//					OpponentState->SetKnifeEffectPending(false);
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+	//// 상대가 타겟일 때
+	//else if (OpponentState == TargetState)
+	//{
+	//	TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, OpponentState);
+
+	//	if (FiredAmmo == EAmmoType::Live)
+	//	{
+	//		// 내 턴에 상대를 쐈다면
+	//		if (MyState == GS->TurnPlayer) AttackDamage(MyState, OpponentState);
+	//		// 상대가 자기 자신을 쐈다면
+	//		else AttackDamage(OpponentState, OpponentState);
+
+	//		// Damage Anim
+	//		TriggerDamageAnim(OpponentState);
+
+	//		if (OpponentState->Hp <= 0)
+	//		{
+	//			// 해당 라운드 종료
+	//			bRoundOver = true;
+
+	//			// Death Anim
+	//			TriggerDeathAnim(OpponentState);
+	//		}
+	//		else if (HasAuthority())
+	//		{
+	//			// 내 턴에 상대를 쐈다면
+	//			if (MyState == GS->TurnPlayer)
+	//			{
+	//				if(!TrySkipOpponentTurn(MyState)) NextTurn();
+	//			}
+	//			// 상대가 자기 자신을 쐈으면
+	//			else
+	//			{
+	//				if(!TrySkipOpponentTurn(OpponentState)) NextTurn();
+	//			}
+	//		}
+	//	}
+	//	else if (FiredAmmo == EAmmoType::Blank)
+	//	{
+	//		if (HasAuthority())
+	//		{
+	//			// 내 턴에 상대를 쐈다면
+	//			if (MyState == GS->TurnPlayer)
+	//			{
+	//				if (!TrySkipOpponentTurn(MyState))
+	//				{
+	//					NextTurn();
+
+	//					// Knife 효과 무효: 변수 초기화
+	//					MyState->SetKnifeEffectPending(false);
+	//				}
+	//			}
+	//			// 상대가 자기 자신을 쐈다면
+	//			else
+	//			{
+	//				TrySkipOpponentTurn(OpponentState);
+
+	//				// Knife 효과 무효: 변수 초기화
+	//				OpponentState->SetKnifeEffectPending(false);
+	//			}
+	//		}
+	//	}
+	//}
+	//
+	//// 마지막 총알일 때 해당 라운드 종료
+	//if (HasAuthority())
+	//{
+	//	bool bIsAmmoEmpty = (GS->CurrentAmmoIndex >= GS->AmmoSequence.Num());
+	//	if (bIsAmmoEmpty || bIsLastAmmo || bRoundOver)
+	//	{
+	//		bIsLastAmmo = false;
+	//		OnRoundEnd();
+	//	}
+	//}
 }
 
 void ABRPlayerController::AttackDamage(ABRPlayerState* FiredPlayer, ABRPlayerState* TargetPlayer)
 {
+	if(!HasAuthority()) return;
+	
+	UE_LOG(LogTemp, Warning, TEXT("AttackDamage executed on %s | %s HP is now %d"),
+		   HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+		   *TargetPlayer->GetPlayerName(),
+		   TargetPlayer->Hp);
+
 	UE_LOG(LogTemp, Log, TEXT("[KNIFE] %s's knife effect pening is %s"), *FiredPlayer->GetPlayerName(), FiredPlayer->IsKnifeEffectPending() ? TEXT("TRUE") : TEXT("FALSE"));
 
 	if (TargetPlayer && FiredPlayer && FiredPlayer->IsKnifeEffectPending())
@@ -440,6 +533,8 @@ void ABRPlayerController::TriggerDeathAnim(ABRPlayerState* PS)
 
 void ABRPlayerController::TriggerFireAnim(ABRPlayerState* PS, int32 TargetPlayerIndex)
 {
+	if(!PS) return;
+
 	int32 FiringPlayerIndex = PS->PlayerIndex;
 
 	if (FiringPlayerIndex != TargetPlayerIndex + 1)
@@ -471,6 +566,8 @@ void ABRPlayerController::TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 Tar
 
 bool ABRPlayerController::TrySkipOpponentTurn(ABRPlayerState* PS)
 {
+	if (!HasAuthority()) return false;
+
 	if (PS && PS->ShouldSkipOpponentTurn())
 	{
 		PS->SetSkipOpponentTurn(false); // 사용 후 초기화
@@ -496,6 +593,8 @@ void ABRPlayerController::NextTurn()
 
 void ABRPlayerController::OnRoundEnd()
 {
+	if (!HasAuthority()) return;
+
 	FTimerHandle Handle;
 	GetWorld()->GetTimerManager().SetTimer(Handle,
 		FTimerDelegate::CreateLambda([&]()

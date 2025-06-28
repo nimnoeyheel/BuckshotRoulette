@@ -67,7 +67,7 @@ void USlotComponent::AttachItem(AItem* Item)
 	// 아이템도 SlotComponent를 참조하도록
 	Item->SetAttachedSlot(this);
 
-	// 액터에 붙이기(비주얼)
+	// 액터에 붙이기
 	Item->AttachToComponent(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	Item->SetActorRelativeLocation(FVector::ZeroVector);
 	Item->SetActorRelativeRotation(FRotator::ZeroRotator);
