@@ -208,11 +208,6 @@ void ABRGameMode::NextTurn()
 	if (GS->TurnPlayer) LastTurnPlayer = GS->TurnPlayer;
 
 	// 턴 넘기기
-	/*TArray<APlayerState*> Players = GS->PlayerArray;
-	int32 CurrentIdx = Players.IndexOfByKey(GS->TurnPlayer);
-	int32 NextIdx = (CurrentIdx + 1) % Players.Num();
-	GS->SetTurnPlayer(Players[NextIdx]);*/
-
 	TArray<APlayerState*> Players = GameState->PlayerArray;
 	if (GS->TurnPlayer == Players[0])
 	{

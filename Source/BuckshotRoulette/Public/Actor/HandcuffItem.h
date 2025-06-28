@@ -40,9 +40,6 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class USceneComponent* RootScene;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UStaticMeshComponent* HandcuffMesh;
-
 	// 오버랩 영역 (상호작용)
 	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* OverlapBox;

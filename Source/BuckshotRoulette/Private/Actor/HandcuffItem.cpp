@@ -23,23 +23,6 @@ AHandcuffItem::AHandcuffItem()
 	OverlapBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	OverlapBox->SetGenerateOverlapEvents(true);
 
-	HandcuffMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HandcuffMesh"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> HandcuffMeshAsset(TEXT("/Game/KJM/Asset/Item/Retopo_Handcuffs.Retopo_Handcuffs"));
-	if (HandcuffMeshAsset.Object)
-	{
-		HandcuffMesh->SetStaticMesh(HandcuffMeshAsset.Object);
-		HandcuffMesh->SetupAttachment(RootComponent);
-		HandcuffMesh->SetRelativeLocation(FVector(38, 13, 2)); // (X=38.000000,Y=13.000000,Z=2.000000)
-		HandcuffMesh->SetRelativeRotation(FRotator(90, 0, 0)); // (Pitch=90.000000,Yaw=0.000000,Roll=0.000000)
-	}
-
-	//RootComponent = HandcuffMesh;
-	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
-	if (AnimPath.Class)
-	{
-		HandcuffMesh->SetAnimInstanceClass(AnimPath.Class);
-	}*/
-
 	// 이벤트 바인딩
 	OverlapBox->OnBeginCursorOver.AddDynamic(this, &AHandcuffItem::OnBeginMouseOver);
 	OverlapBox->OnEndCursorOver.AddDynamic(this, &AHandcuffItem::OnEndMouseOver);

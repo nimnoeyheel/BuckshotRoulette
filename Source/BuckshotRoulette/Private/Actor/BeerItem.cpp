@@ -34,12 +34,6 @@ ABeerItem::ABeerItem()
 		BeerMesh->SetIsReplicated(false);
 	}
 
-	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimPath(TEXT(""));
-	if (AnimPath.Class)
-	{
-		BeerMesh->SetAnimInstanceClass(AnimPath.Class);
-	}*/
-
 	// 이벤트 바인딩
 	OverlapBox->OnBeginCursorOver.AddDynamic(this, &ABeerItem::OnBeginMouseOver);
 	OverlapBox->OnEndCursorOver.AddDynamic(this, &ABeerItem::OnEndMouseOver);
