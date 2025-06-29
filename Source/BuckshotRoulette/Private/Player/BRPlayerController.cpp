@@ -16,6 +16,7 @@
 #include "Actor/SlotComponent.h"
 #include "Actor/Board.h"
 #include "Actor/Item.h"
+#include "Game/BGMManager.h"
 
 ABRPlayerController::ABRPlayerController()
 {
@@ -30,6 +31,10 @@ void ABRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// BGMManager 생성
+	BGMManager = NewObject<UBGMManager>(this);
+	BGMManager->RegisterComponent();
+
 	// 서버-클라이언트 확인용
 	if (IsLocalController())
 	{
@@ -43,6 +48,7 @@ void ABRPlayerController::BeginPlay()
 			{
 				MainUI->AddToViewport();
 				MainUI->ShowInGame();
+				if (BGMManager) BGMManager->PlayBGM(0);
 			}
 		}
 
@@ -169,7 +175,12 @@ void ABRPlayerController::OnUpdateNewRound()
 	FString Player1Nick = P1 ? P1->GetPlayerName() : TEXT("Unknown1");
 	FString Player2Nick = P2 ? P2->GetPlayerName() : TEXT("Unknown2");
 
-	UE_LOG(LogTemp, Warning, TEXT("OnUpdateNewRound: Player1[%s], Player2[%s]"), *Player1Nick, *Player2Nick);
+	// BGM
+	if (GS->MatchIdx != PrevMatchIdx)
+	{
+		if (BGMManager) BGMManager->PlayBGM(GS->MatchIdx);
+		PrevMatchIdx = GS->MatchIdx;
+	}
 
 	MainUI->InGameUI->UpdateNewRound(
 		GS->MatchIdx, 
@@ -425,6 +436,8 @@ void ABRPlayerController::OnGameOver(ABRPlayerState* Winner)
 {
 	ABRPlayerState* PS = Cast<ABRPlayerState>(PlayerState);
 	if (!PS || !MainUI || !MainUI->ResultUI) return;
+
+	if(BGMManager) BGMManager->PlayBGM(4);
 
 	bool bIsWinner = (PS == Winner);
 

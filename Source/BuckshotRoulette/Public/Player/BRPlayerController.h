@@ -96,4 +96,11 @@ public:
 
 	UPROPERTY()
 	class UMainWidget* MainUI;
+
+// BGM
+	UPROPERTY()
+	class UBGMManager* BGMManager;
+
+	// 이전 매치 번호 저장용
+	int32 PrevMatchIdx = -1;
 };
