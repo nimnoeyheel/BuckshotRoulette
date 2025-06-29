@@ -61,9 +61,21 @@ public:
 public:
 // Self Fire
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_TriggerSelfFireAnim(bool bIsServer);
+	void Multicast_TriggerSelfFireAnim(bool bIsServer, bool bIsLiveAmmo);
 
 	UFUNCTION()
 	void SetAnimBPsFiringValue(const FString VarName);
 
+// Mongtage
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	class UAnimMontage* Montage_SelfFire_Server_Live;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	class UAnimMontage* Montage_SelfFire_Client_Live;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	class UAnimMontage* Montage_SelfFire_Server_Blank;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	class UAnimMontage* Montage_SelfFire_Client_Blank;
 };

@@ -52,6 +52,22 @@ AShotgun::AShotgun()
 	OverlapBox->OnEndCursorOver.AddDynamic(this, &AShotgun::OnEndMouseOver);
 	OverlapBox->OnClicked.AddDynamic(this, &AShotgun::OnClicked);
 
+	// 몽타주
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> MontageServerLiveObj(TEXT("/Game/BuckShotRoulette/Blueprints/Shotgun/AM_SelfFire1_Live.AM_SelfFire1_Live"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> MontageClientLiveObj(TEXT("/Game/BuckShotRoulette/Blueprints/Shotgun/AM_SelfFire2_Live.AM_SelfFire2_Live"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> MontageServerBlankObj(TEXT("/Game/BuckShotRoulette/Blueprints/Shotgun/AM_SelfFire1_Blank.AM_SelfFire1_Blank"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> MontageClientBlankObj(TEXT("/Game/BuckShotRoulette/Blueprints/Shotgun/AM_SelfFire2_Blank.AM_SelfFire2_Blank"));
+	if (MontageServerLiveObj.Succeeded() &&
+		MontageClientLiveObj.Succeeded() &&
+		MontageServerBlankObj.Succeeded() &&
+		MontageClientBlankObj.Succeeded())
+	{
+		Montage_SelfFire_Server_Live = MontageServerLiveObj.Object;
+		Montage_SelfFire_Client_Live = MontageClientLiveObj.Object;
+		Montage_SelfFire_Server_Blank = MontageServerBlankObj.Object;
+		Montage_SelfFire_Client_Blank = MontageClientBlankObj.Object;
+	}
+
 	bReplicates = true;
 }
 
@@ -117,16 +133,54 @@ void AShotgun::Multicast_SetInteractionEnabled_Implementation(bool bEnabled)
 	bIsInteractive = bEnabled;
 }
 
-void AShotgun::Multicast_TriggerSelfFireAnim_Implementation(bool bIsServer)
+void AShotgun::Multicast_TriggerSelfFireAnim_Implementation(bool bIsServer, bool bIsLiveAmmo)
 {
+	if (!ShotgunMesh) return;
+	UAnimInstance* AnimBP = ShotgunMesh->GetAnimInstance();
+	if (!AnimBP) return;
+
 	if (bIsServer)
+	{
+		if (bIsLiveAmmo) AnimBP->Montage_Play(Montage_SelfFire_Server_Live);
+		else AnimBP->Montage_Play(Montage_SelfFire_Server_Blank);
+	}
+	else
+	{
+		if (bIsLiveAmmo) AnimBP->Montage_Play(Montage_SelfFire_Client_Live);
+		else AnimBP->Montage_Play(Montage_SelfFire_Client_Blank);
+	}
+
+	// 'this'를 캡처 목록에 추가하여 람다 본문에서 참조 가능하도록 수정
+	TWeakObjectPtr<AShotgun> WeakThis(this);
+
+	// (SelfFireAnim Sec)
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle,[WeakThis]()
+		{
+			// Shotgun 호버 허용
+			WeakThis->Multicast_SetInteractionEnabled(true);
+			// Items 호버 허용
+				if (WeakThis->OwningCharacter)
+				{
+				TArray<AItem*> MyItems;
+				WeakThis->OwningCharacter->GetOwnedItems(MyItems);
+				for (AItem* Item : MyItems)
+				{
+					if (Item) Item->Multicast_SetItemsInteractionEnabled(true);
+				}
+			}
+		},
+	2.23f, false);
+
+
+	/*if (bIsServer)
 	{
 		SetAnimBPsFiringValue(TEXT("bIsServerFiring"));
 	}
 	else
 	{
 		SetAnimBPsFiringValue(TEXT("bIsClientFiring"));
-	}
+	}*/
 }
 
 void AShotgun::SetAnimBPsFiringValue(const FString VarName)

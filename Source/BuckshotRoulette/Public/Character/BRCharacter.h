@@ -52,9 +52,9 @@ public:
 
 // 애니메이션
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_TriggerAttackAnim();
+	void Multicast_TriggerAttackAnim(bool bIsLiveAmmo);
 	UFUNCTION()
-	void TriggerAttackAnim();
+	void TriggerAttackAnim(bool bIsLiveAmmo);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_TriggerDamageAnim();
@@ -68,6 +68,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category="Anim")
 	EPlayerAnimState PlayerAnimState = EPlayerAnimState::Idle;
+
+// 몽타주
+	UPROPERTY(EditDefaultsOnly, Category="Anim")
+	class UAnimMontage* Montage_Attack_Live;
+	UPROPERTY(EditDefaultsOnly, Category="Anim")
+	class UAnimMontage* Montage_Attack_Blank;
 
 // 소유한 아이템
 	void GetOwnedItems(TArray<class AItem*>& OutItems) const;

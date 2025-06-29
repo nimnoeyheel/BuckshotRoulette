@@ -54,10 +54,10 @@ public:
 
 // 애니메이션
 	UFUNCTION()
-	void TriggerFireAnim(class ABRPlayerState* PS, int32 TargetPlayerIndex);
+	void TriggerFireAnim(class ABRPlayerState* PS, int32 TargetPlayerIndex, bool bIsLiveAmmo);
 
 	UFUNCTION()
-	void TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 TargetPlayerIndex, class ABRPlayerState* PS);
+	void TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 TargetPlayerIndex, class ABRPlayerState* PS, EAmmoType AmmoType);
 	
 	UFUNCTION()
 	void TriggerDamageAnim(class ABRPlayerState* PS);

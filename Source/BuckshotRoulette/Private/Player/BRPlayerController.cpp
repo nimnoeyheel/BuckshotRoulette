@@ -251,7 +251,8 @@ void ABRPlayerController::ServerRPC_RequestFire_Implementation(int32 TargetPlaye
 	if (!Target) return;
 
 	// 연출용: 발사 애니메이션은 여기서 서버가 발사자에게만 호출
-	TriggerFireAnim(Attacker, TargetPlayerIndex);
+	const bool bIsLive = (FiredAmmo == EAmmoType::Live);
+	TriggerFireAnim(Attacker, TargetPlayerIndex, bIsLive);
 
 	// 데미지 처리
 	if (Target && FiredAmmo == EAmmoType::Live)
@@ -296,7 +297,7 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 	// 연출용: 내가 타겟일 때
 	if (MyState == TargetState)
 	{
-		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, MyState);
+		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, MyState, FiredAmmo);
 
 		if (FiredAmmo == EAmmoType::Live)
 		{
@@ -311,7 +312,7 @@ void ABRPlayerController::OnFireResult(int32 FiringPlayerIndex, int32 TargetPlay
 	// 연출용: 상대가 타겟일 때
 	else
 	{
-		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, TargetState);
+		TriggerSelfFireAnim(FiringPlayerIndex, TargetPlayerIndex, TargetState, FiredAmmo);
 
 		if (FiredAmmo == EAmmoType::Live)
 		{
@@ -344,7 +345,7 @@ void ABRPlayerController::TriggerDeathAnim(ABRPlayerState* PS)
 	Char->Multicast_TriggerDeathAnim();
 }
 
-void ABRPlayerController::TriggerFireAnim(ABRPlayerState* PS, int32 TargetPlayerIndex)
+void ABRPlayerController::TriggerFireAnim(ABRPlayerState* PS, int32 TargetPlayerIndex, bool bIsLiveAmmo)
 {
 	if(!PS) return;
 
@@ -356,14 +357,14 @@ void ABRPlayerController::TriggerFireAnim(ABRPlayerState* PS, int32 TargetPlayer
 		{
 			if (ABRCharacter* MyChar = Cast<ABRCharacter>(MyPawn))
 			{
-				MyChar->Multicast_TriggerAttackAnim();
+				MyChar->Multicast_TriggerAttackAnim(bIsLiveAmmo);
 			}
 
 		}
 	}
 }
 
-void ABRPlayerController::TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 TargetPlayerIndex, ABRPlayerState* PS)
+void ABRPlayerController::TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 TargetPlayerIndex, ABRPlayerState* PS, EAmmoType AmmoType)
 {
 	APawn* MyPawn = PS->GetPawn();
 	if (!MyPawn) return;
@@ -372,8 +373,9 @@ void ABRPlayerController::TriggerSelfFireAnim(int32 FiringPlayerIndex, int32 Tar
 
 	if (FiringPlayerIndex == TargetPlayerIndex + 1)
 	{
-		bool bIsServer = PS->PlayerIndex == 1 ? true : false;
-		Char->GetShotgunActor()->Multicast_TriggerSelfFireAnim(bIsServer);
+		bool bIsServer = (PS->PlayerIndex == 1) ? true : false;
+		bool bIsLiveAmmo = (AmmoType == EAmmoType::Live) ? true : false;
+		Char->GetShotgunActor()->Multicast_TriggerSelfFireAnim(bIsServer, bIsLiveAmmo);
 	}
 }
 

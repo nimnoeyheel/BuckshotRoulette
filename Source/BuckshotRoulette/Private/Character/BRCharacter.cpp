@@ -37,6 +37,14 @@ ABRCharacter::ABRCharacter()
 	CameraComp->SetRelativeLocation(FVector(30, 0, 58)); // (X=30.000000,Y=0.000000,Z=58.000000)
 	CameraComp->SetRelativeRotation(FRotator(-26, 0, 0)); // (Pitch=-26.000000,Yaw=0.000000,Roll=0.000000)
 
+	// 몽타주
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> MontageLiveObj(TEXT("/Game/BuckShotRoulette/Blueprints/Character/AM_Fire_Live.AM_Fire_Live"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> MontageBlankObj(TEXT("/Game/BuckShotRoulette/Blueprints/Character/AM_Fire_Blank.AM_Fire_Blank"));
+	if (MontageLiveObj.Succeeded() && MontageBlankObj.Succeeded())
+	{
+		Montage_Attack_Live = MontageLiveObj.Object;
+		Montage_Attack_Blank = MontageBlankObj.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -107,15 +115,21 @@ void ABRCharacter::AttachShotgunToBoard()
 	}
 }
 
-void ABRCharacter::Multicast_TriggerAttackAnim_Implementation()
+void ABRCharacter::Multicast_TriggerAttackAnim_Implementation(bool bIsLiveAmmo)
 {
 	AttachShotgunToHand();
-	TriggerAttackAnim();
+	TriggerAttackAnim(bIsLiveAmmo);
 }
 
-void ABRCharacter::TriggerAttackAnim()
+void ABRCharacter::TriggerAttackAnim(bool bIsLiveAmmo)
 {
 	PlayerAnimState = EPlayerAnimState::Attack;
+
+	if (GetMesh() && GetMesh()->GetAnimInstance())
+	{
+		UAnimMontage* AttackMontage = bIsLiveAmmo ? Montage_Attack_Live : Montage_Attack_Blank;
+		GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
+	}
 
 	// 2.5초 뒤 (FireAnim Sec)
 	FTimerHandle Handle;
